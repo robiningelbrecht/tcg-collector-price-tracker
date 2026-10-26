@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Console;
 
+use App\Domain\Collection\CardMatcher;
 use App\Domain\Collection\OwnedCard;
 use App\Domain\Collection\OwnedCardRepository;
+use App\Domain\Set\CardSet;
+use App\Domain\Set\CardSetRepository;
 use App\Domain\TcgCollector\CollectionHtmlParser;
 use App\Domain\TcgCollector\CouldNotParseCollectionHtml;
+use App\Domain\TcgDex\TcgDexApi;
+use App\Domain\TcgDex\TcgDexLanguage;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -15,12 +20,15 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'app:collection:import', description: 'Import owned cards from a saved TCG Collector collection page')]
+#[AsCommand(name: 'app:collection:import', description: 'Import owned cards from a saved TCG Collector collection page and match them to TCGdex')]
 final class ImportCollectionConsoleCommand extends Command
 {
     public function __construct(
         private readonly CollectionHtmlParser $collectionHtmlParser,
+        private readonly CardMatcher $cardMatcher,
         private readonly OwnedCardRepository $ownedCardRepository,
+        private readonly CardSetRepository $cardSetRepository,
+        private readonly TcgDexApi $tcgDexApi,
     ) {
         parent::__construct();
     }
@@ -43,23 +51,85 @@ final class ImportCollectionConsoleCommand extends Command
         }
 
         try {
-            $ownedCards = $this->collectionHtmlParser->parse($html, new \DateTimeImmutable());
+            $collectionCards = $this->collectionHtmlParser->parse($html);
         } catch (CouldNotParseCollectionHtml $e) {
             $output->error($e->getMessage());
 
             return Command::FAILURE;
         }
 
-        foreach ($ownedCards as $ownedCard) {
-            $this->ownedCardRepository->upsert($ownedCard);
+        if (0 === $this->cardSetRepository->count()) {
+            $output->error('No TCGdex sets found, run app:sets:import first');
+
+            return Command::FAILURE;
+        }
+
+        $cardSets = [];
+        foreach (TcgDexLanguage::cases() as $language) {
+            $cardSets[$language->value] = $this->cardSetRepository->findAllForLanguage($language);
+        }
+
+        $now = new \DateTimeImmutable();
+        $alreadyMatched = 0;
+        $newlyMatched = 0;
+        $unmatched = [];
+
+        foreach ($output->progressIterate($collectionCards) as $collectionCard) {
+            $ownedCard = $this->ownedCardRepository->find(
+                $collectionCard->getTcgCollectorCardId(),
+                $collectionCard->getVariantTypeId(),
+                $collectionCard->getLanguageId(),
+            );
+            if ($ownedCard instanceof OwnedCard) {
+                $this->ownedCardRepository->upsert($ownedCard->withCount($collectionCard->getCount(), $now));
+                ++$alreadyMatched;
+                continue;
+            }
+
+            $language = TcgDexLanguage::fromTcgRegion($collectionCard->getRegion());
+            $match = $this->cardMatcher->match($collectionCard, $cardSets[$language->value], $now);
+            $matchedCard = $match->getOwnedCard();
+            if (!$matchedCard instanceof OwnedCard) {
+                $unmatched[] = [
+                    $collectionCard->getName(),
+                    $collectionCard->getSetName(),
+                    $collectionCard->getCardNumber(),
+                    $collectionCard->getVariantName(),
+                    $match->getReason(),
+                ];
+                continue;
+            }
+
+            $this->ownedCardRepository->upsert($matchedCard);
+            $this->importCardSetDetails($language, $matchedCard->getCardSetId(), $now);
+            ++$newlyMatched;
+        }
+
+        if ([] !== $unmatched) {
+            $output->section('Unmatched cards');
+            $output->table(['Name', 'Set', 'Number', 'Variant', 'Reason'], $unmatched);
         }
 
         $output->success(sprintf(
-            'Imported %d owned card variants (%d copies)',
-            count($ownedCards),
-            $ownedCards->sum(fn (OwnedCard $ownedCard): int => $ownedCard->getCount()),
+            '%d already matched, %d newly matched, %d unmatched',
+            $alreadyMatched,
+            $newlyMatched,
+            count($unmatched),
         ));
 
         return Command::SUCCESS;
+    }
+
+    private function importCardSetDetails(TcgDexLanguage $language, string $cardSetId, \DateTimeImmutable $now): void
+    {
+        if ($this->cardSetRepository->find($language, $cardSetId)?->hasDetails()) {
+            return;
+        }
+
+        if (null === $data = $this->tcgDexApi->getSet($language, $cardSetId)) {
+            return;
+        }
+
+        $this->cardSetRepository->upsert(CardSet::fromTcgDex($language, $data, $now));
     }
 }

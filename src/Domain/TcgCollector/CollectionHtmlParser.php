@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\TcgCollector;
 
-use App\Domain\Collection\OwnedCard;
-use App\Domain\Collection\OwnedCards;
 use Symfony\Component\DomCrawler\Crawler;
 
 final readonly class CollectionHtmlParser
 {
     private const string APP_STATE_MARKER = 'appState: ';
 
-    public function parse(string $html, \DateTimeImmutable $importedOn): OwnedCards
+    public function parse(string $html): CollectionCards
     {
         $appState = $this->decodeAppState($html);
         /** @var array<int, array{entries: list<array{cardVariantTypeId: int, cardLanguageId: int, cardCount: int}>}> $collectionCards */
@@ -22,9 +20,9 @@ final readonly class CollectionHtmlParser
         /** @var array<int, int> $regions */
         $regions = $appState['cardIdToTcgRegionIdMap'] ?? [];
 
-        $ownedCards = OwnedCards::empty();
+        $collection = CollectionCards::empty();
         $crawler = new Crawler($html);
-        $crawler->filter('div.card-image-grid-item[data-card-id]')->each(function (Crawler $item) use ($collectionCards, $variantTypes, $regions, $importedOn, $ownedCards): void {
+        $crawler->filter('div.card-image-grid-item[data-card-id]')->each(function (Crawler $item) use ($collectionCards, $variantTypes, $regions, $collection): void {
             $cardId = (int) $item->attr('data-card-id');
             $entries = $collectionCards[$cardId]['entries'] ?? [];
             if ([] === $entries) {
@@ -40,9 +38,6 @@ final readonly class CollectionHtmlParser
                     ? $item->filter('img.set-symbol')->attr('alt')
                     : $this->text($item, '.card-image-grid-item-info-overlay-expansion-code'));
             }
-            $rarityNode = $item->filter('img.card-rarity-symbol');
-            $rarity = $rarityNode->count() > 0 ? $rarityNode->attr('alt') : null;
-            $slug = basename((string) $link->attr('href'));
             $region = TcgRegion::tryFrom($regions[$cardId] ?? 1) ?? TcgRegion::INTERNATIONAL;
 
             $counts = [];
@@ -53,24 +48,21 @@ final readonly class CollectionHtmlParser
 
             foreach ($counts as $key => $count) {
                 [$variantTypeId, $languageId] = array_map(intval(...), explode('-', $key));
-                $ownedCards->add(OwnedCard::create(
+                $collection->add(new CollectionCard(
                     tcgCollectorCardId: $cardId,
                     variantTypeId: $variantTypeId,
                     languageId: $languageId,
                     name: $name,
                     setName: $setName,
                     cardNumber: $cardNumber,
-                    rarity: $rarity,
                     variantName: $variantTypes[$variantTypeId]['name'] ?? 'Unknown',
                     region: $region,
                     count: $count,
-                    tcgCollectorSlug: $slug,
-                    importedOn: $importedOn,
                 ));
             }
         });
 
-        return $ownedCards;
+        return $collection;
     }
 
     /**
