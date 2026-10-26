@@ -9,51 +9,6 @@ use App\Infrastructure\Repository\DbalRepository;
 
 final readonly class DbalOwnedCardRepository extends DbalRepository implements OwnedCardRepository
 {
-    public function upsert(OwnedCard $ownedCard): void
-    {
-        $sql = 'INSERT INTO OwnedCard (tcgCollectorCardId, variantTypeId, languageId, variantName, count, priceVariantId, language, cardId, cardSetId, localId, name, category, rarity, illustrator, image, hp, data, importedOn)
-        VALUES (:tcgCollectorCardId, :variantTypeId, :languageId, :variantName, :count, :priceVariantId, :language, :cardId, :cardSetId, :localId, :name, :category, :rarity, :illustrator, :image, :hp, :data, :importedOn)
-        ON CONFLICT (tcgCollectorCardId, variantTypeId, languageId) DO UPDATE SET
-            count = excluded.count,
-            priceVariantId = excluded.priceVariantId,
-            importedOn = excluded.importedOn';
-
-        $this->connection->executeStatement($sql, [
-            'tcgCollectorCardId' => $ownedCard->getTcgCollectorCardId(),
-            'variantTypeId' => $ownedCard->getVariantTypeId(),
-            'languageId' => $ownedCard->getLanguageId(),
-            'variantName' => $ownedCard->getVariantName(),
-            'count' => $ownedCard->getCount(),
-            'priceVariantId' => $ownedCard->getPriceVariantId(),
-            'language' => $ownedCard->getLanguage()->value,
-            'cardId' => $ownedCard->getCardId(),
-            'cardSetId' => $ownedCard->getCardSetId(),
-            'localId' => $ownedCard->getLocalId(),
-            'name' => $ownedCard->getName(),
-            'category' => $ownedCard->getCategory(),
-            'rarity' => $ownedCard->getRarity(),
-            'illustrator' => $ownedCard->getIllustrator(),
-            'image' => $ownedCard->getImage(),
-            'hp' => $ownedCard->getHp(),
-            'data' => json_encode($ownedCard->getData(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'importedOn' => $ownedCard->getImportedOn()->format('Y-m-d H:i:s'),
-        ]);
-    }
-
-    public function find(int $tcgCollectorCardId, int $variantTypeId, int $languageId): ?OwnedCard
-    {
-        $result = $this->connection->executeQuery(
-            'SELECT * FROM OwnedCard WHERE tcgCollectorCardId = :tcgCollectorCardId AND variantTypeId = :variantTypeId AND languageId = :languageId',
-            [
-                'tcgCollectorCardId' => $tcgCollectorCardId,
-                'variantTypeId' => $variantTypeId,
-                'languageId' => $languageId,
-            ]
-        )->fetchAssociative();
-
-        return false === $result ? null : $this->hydrate($result);
-    }
-
     public function findOneByCardId(TcgDexLanguage $language, string $cardId): ?OwnedCard
     {
         $result = $this->connection->executeQuery(

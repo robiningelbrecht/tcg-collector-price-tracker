@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Collection;
 
-use App\Domain\TcgCollector\CollectionCard;
 use App\Domain\TcgDex\TcgDexLanguage;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -60,48 +59,6 @@ final readonly class OwnedCard
     /**
      * @param array<string, mixed> $data
      */
-    public static function fromTcgDex(
-        CollectionCard $collectionCard,
-        TcgDexLanguage $language,
-        array $data,
-        \DateTimeImmutable $importedOn,
-    ): self {
-        unset($data['pricing']);
-        if (is_array($data['variants_detailed'] ?? null)) {
-            foreach (array_keys($data['variants_detailed']) as $index) {
-                if (is_array($data['variants_detailed'][$index])) {
-                    unset($data['variants_detailed'][$index]['pricing']);
-                }
-            }
-        }
-        /** @var array{id?: string} $set */
-        $set = is_array($data['set'] ?? null) ? $data['set'] : [];
-
-        return new self(
-            tcgCollectorCardId: $collectionCard->getTcgCollectorCardId(),
-            variantTypeId: $collectionCard->getVariantTypeId(),
-            languageId: $collectionCard->getLanguageId(),
-            variantName: $collectionCard->getVariantName(),
-            count: $collectionCard->getCount(),
-            priceVariantId: null,
-            language: $language,
-            cardId: self::stringOrNull($data['id'] ?? null) ?? '',
-            cardSetId: $set['id'] ?? '',
-            localId: self::stringOrNull($data['localId'] ?? null) ?? '',
-            name: self::stringOrNull($data['name'] ?? null) ?? '',
-            category: self::stringOrNull($data['category'] ?? null),
-            rarity: self::stringOrNull($data['rarity'] ?? null),
-            illustrator: self::stringOrNull($data['illustrator'] ?? null),
-            image: self::stringOrNull($data['image'] ?? null),
-            hp: is_int($data['hp'] ?? null) ? $data['hp'] : null,
-            data: $data,
-            importedOn: $importedOn,
-        );
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
     public static function fromState(
         int $tcgCollectorCardId,
         int $variantTypeId,
@@ -142,59 +99,6 @@ final readonly class OwnedCard
             data: $data,
             importedOn: $importedOn,
         );
-    }
-
-    public function withCount(int $count, \DateTimeImmutable $importedOn): self
-    {
-        return self::fromState(
-            tcgCollectorCardId: $this->tcgCollectorCardId,
-            variantTypeId: $this->variantTypeId,
-            languageId: $this->languageId,
-            variantName: $this->variantName,
-            count: $count,
-            priceVariantId: $this->priceVariantId,
-            language: $this->language,
-            cardId: $this->cardId,
-            cardSetId: $this->cardSetId,
-            localId: $this->localId,
-            name: $this->name,
-            category: $this->category,
-            rarity: $this->rarity,
-            illustrator: $this->illustrator,
-            image: $this->image,
-            hp: $this->hp,
-            data: $this->data,
-            importedOn: $importedOn,
-        );
-    }
-
-    public function withPriceVariantId(?string $priceVariantId): self
-    {
-        return self::fromState(
-            tcgCollectorCardId: $this->tcgCollectorCardId,
-            variantTypeId: $this->variantTypeId,
-            languageId: $this->languageId,
-            variantName: $this->variantName,
-            count: $this->count,
-            priceVariantId: $priceVariantId,
-            language: $this->language,
-            cardId: $this->cardId,
-            cardSetId: $this->cardSetId,
-            localId: $this->localId,
-            name: $this->name,
-            category: $this->category,
-            rarity: $this->rarity,
-            illustrator: $this->illustrator,
-            image: $this->image,
-            hp: $this->hp,
-            data: $this->data,
-            importedOn: $this->importedOn,
-        );
-    }
-
-    private static function stringOrNull(mixed $value): ?string
-    {
-        return is_string($value) ? $value : null;
     }
 
     public function getTcgCollectorCardId(): int

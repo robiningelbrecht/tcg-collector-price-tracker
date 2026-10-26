@@ -73,39 +73,6 @@ final readonly class CardSet
         );
     }
 
-    /**
-     * @param array<string, mixed> $data
-     */
-    public static function fromState(
-        TcgDexLanguage $language,
-        string $cardSetId,
-        string $name,
-        ?string $serieId,
-        ?string $serieName,
-        ?string $releaseDate,
-        ?string $logo,
-        ?string $symbol,
-        ?int $cardCountOfficial,
-        ?int $cardCountTotal,
-        array $data,
-        ?\DateTimeImmutable $detailsImportedOn,
-    ): self {
-        return new self(
-            language: $language,
-            cardSetId: $cardSetId,
-            name: $name,
-            serieId: $serieId,
-            serieName: $serieName,
-            releaseDate: $releaseDate,
-            logo: $logo,
-            symbol: $symbol,
-            cardCountOfficial: $cardCountOfficial,
-            cardCountTotal: $cardCountTotal,
-            data: $data,
-            detailsImportedOn: $detailsImportedOn,
-        );
-    }
-
     private static function stringOrNull(mixed $value): ?string
     {
         return is_string($value) ? $value : null;
@@ -172,10 +139,5 @@ final readonly class CardSet
     public function getDetailsImportedOn(): ?\DateTimeImmutable
     {
         return $this->detailsImportedOn;
-    }
-
-    public function hasDetails(): bool
-    {
-        return $this->detailsImportedOn instanceof \DateTimeImmutable;
     }
 }
