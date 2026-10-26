@@ -42,6 +42,10 @@ final readonly class DbalOwnedCardRepository extends DbalRepository implements O
         return OwnedCard::fromState(
             cardId: (string) $result['cardId'],
             priceVariantId: (string) $result['priceVariantId'],
+            variantType: isset($result['variantType']) ? (string) $result['variantType'] : null,
+            variantSubtype: isset($result['variantSubtype']) ? (string) $result['variantSubtype'] : null,
+            variantSize: isset($result['variantSize']) ? (string) $result['variantSize'] : null,
+            variantStamps: isset($result['variantStamps']) ? (string) $result['variantStamps'] : null,
             count: (int) $result['count'],
             language: TcgDexLanguage::from((string) $result['language']),
             cardSetId: (string) $result['cardSetId'],

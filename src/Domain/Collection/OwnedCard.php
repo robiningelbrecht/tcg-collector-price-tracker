@@ -21,6 +21,14 @@ final readonly class OwnedCard
         private string $cardId,
         #[ORM\Id, ORM\Column(type: 'string')]
         private string $priceVariantId,
+        #[ORM\Column(type: 'string', nullable: true)]
+        private ?string $variantType,
+        #[ORM\Column(type: 'string', nullable: true)]
+        private ?string $variantSubtype,
+        #[ORM\Column(type: 'string', nullable: true)]
+        private ?string $variantSize,
+        #[ORM\Column(type: 'string', nullable: true)]
+        private ?string $variantStamps,
         #[ORM\Column(type: 'integer')]
         private int $count,
         #[ORM\Column(type: 'string', enumType: TcgDexLanguage::class)]
@@ -54,6 +62,10 @@ final readonly class OwnedCard
     public static function fromState(
         string $cardId,
         string $priceVariantId,
+        ?string $variantType,
+        ?string $variantSubtype,
+        ?string $variantSize,
+        ?string $variantStamps,
         int $count,
         TcgDexLanguage $language,
         string $cardSetId,
@@ -70,6 +82,10 @@ final readonly class OwnedCard
         return new self(
             cardId: $cardId,
             priceVariantId: $priceVariantId,
+            variantType: $variantType,
+            variantSubtype: $variantSubtype,
+            variantSize: $variantSize,
+            variantStamps: $variantStamps,
             count: $count,
             language: $language,
             cardSetId: $cardSetId,
@@ -93,6 +109,26 @@ final readonly class OwnedCard
     public function getPriceVariantId(): string
     {
         return $this->priceVariantId;
+    }
+
+    public function getVariantType(): ?string
+    {
+        return $this->variantType;
+    }
+
+    public function getVariantSubtype(): ?string
+    {
+        return $this->variantSubtype;
+    }
+
+    public function getVariantSize(): ?string
+    {
+        return $this->variantSize;
+    }
+
+    public function getVariantStamps(): ?string
+    {
+        return $this->variantStamps;
     }
 
     public function getLanguage(): TcgDexLanguage
