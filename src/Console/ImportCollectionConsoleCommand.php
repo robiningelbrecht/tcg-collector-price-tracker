@@ -11,6 +11,7 @@ use App\Domain\Collection\OwnedCardRepository;
 use App\Domain\Collection\PriceVariantResolver;
 use App\Domain\Set\CardSet;
 use App\Domain\Set\CardSetRepository;
+use App\Domain\TcgCollector\CollectionCards;
 use App\Domain\TcgCollector\CollectionHtmlParser;
 use App\Domain\TcgCollector\CouldNotParseCollectionHtml;
 use App\Domain\TcgCollector\TcgRegion;
@@ -23,7 +24,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-#[AsCommand(name: 'app:collection:import', description: 'Import owned cards from a saved TCG Collector collection page and match them to TCGdex')]
+#[AsCommand(name: 'app:collection:import', description: 'Import owned cards from saved TCG Collector collection pages and match them to TCGdex')]
 final class ImportCollectionConsoleCommand extends Command
 {
     public function __construct(
@@ -39,27 +40,37 @@ final class ImportCollectionConsoleCommand extends Command
 
     protected function configure(): void
     {
-        $this->addArgument('file', InputArgument::OPTIONAL, 'Path to the saved HTML file', 'storage/page1.html');
+        $this->addArgument('directory', InputArgument::OPTIONAL, 'Directory with the saved HTML files', 'storage/collection');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $output = new SymfonyStyle($input, $output);
-        /** @var string $file */
-        $file = $input->getArgument('file');
+        /** @var string $directory */
+        $directory = $input->getArgument('directory');
 
-        if (!is_file($file) || false === $html = file_get_contents($file)) {
-            $output->error(sprintf('Could not read file "%s"', $file));
+        $files = is_dir($directory) ? glob(rtrim($directory, '/').'/*.html') : false;
+        if (false === $files || [] === $files) {
+            $output->error(sprintf('No HTML files found in directory "%s"', $directory));
 
             return Command::FAILURE;
         }
 
-        try {
-            $collectionCards = $this->collectionHtmlParser->parse($html);
-        } catch (CouldNotParseCollectionHtml $e) {
-            $output->error($e->getMessage());
+        $collectionCards = CollectionCards::empty();
+        foreach ($files as $file) {
+            if (false === $html = file_get_contents($file)) {
+                $output->error(sprintf('Could not read file "%s"', $file));
 
-            return Command::FAILURE;
+                return Command::FAILURE;
+            }
+
+            try {
+                $collectionCards->mergeWith($this->collectionHtmlParser->parse($html));
+            } catch (CouldNotParseCollectionHtml $e) {
+                $output->error(sprintf('%s: %s', $file, $e->getMessage()));
+
+                return Command::FAILURE;
+            }
         }
 
         if (0 === $this->cardSetRepository->count()) {
