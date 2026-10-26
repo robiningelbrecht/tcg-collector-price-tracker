@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as m %}
+
+{% set placeholder = asset('images/card-placeholder.svg') %}
+
+{% block title %}Add card · TCG Price Tracker{% endblock %}
+
+{% block body %}
+    <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <h1 class="m-0 text-2xl font-bold">Add card</h1>
+                <div class="sub">Pick a set, then a card, then the variant you own.</div>
+            </div>
+            <a href="{{ path('dashboard') }}" class="btn btn-muted">Back to dashboard</a>
+        </div>
+
+        <form method="get" action="{{ path('register_owned_card') }}" class="panel mb-4 flex flex-wrap items-center gap-2">
+            <label for="set" class="kpi-l">Set</label>
+            <select id="set" name="set" class="field min-w-0 flex-1" onchange="this.form.submit()" required>
+                <option value="">Choose a set…</option>
+                {% for cardSet in cardSets %}
+                    <option value="{{ cardSet.cardSetId }}" {{ selectedSet is defined and selectedSet and selectedSet.cardSetId == cardSet.cardSetId ? 'selected' }}>{{ cardSet.name }} ({{ cardSet.cardSetId }})</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn">Show cards</button>
+        </form>
+
+        {% if cards is defined %}
+            <section class="panel">
+                <h2 class="panel-title mb-3">{{ selectedSet.name }} · {{ cards|length }} cards</h2>
+                {% if cards is empty %}
+                    <div class="empty">TCGdex lists no cards for this set.</div>
+                {% else %}
+                    <div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-3">
+                        {% for setCard in cards %}
+                            <a href="{{ path('register_owned_card', {card: setCard.cardId}) }}" class="group block rounded-md p-1.5 hover:bg-chip">
+                                <img src="{{ setCard.image ? setCard.image ~ '/low.webp' : placeholder }}" alt="{{ setCard.name }}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='{{ placeholder }}'" class="aspect-[63/88] w-full rounded bg-chip object-cover">
+                                <div class="mt-1.5 truncate text-[13px] font-semibold">{{ setCard.name }}</div>
+                                <div class="text-xs text-muted">#{{ setCard.localId }}{% if setCard.tracked %}<span class="tag">Tracked</span>{% endif %}</div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+
+        {% if card is defined %}
+            {% set selectableVariants = variants|filter(v => not v.tracked) %}
+            <section class="panel grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
+                <div>
+                    <img src="{{ card.image is defined and card.image ? card.image ~ '/high.webp' : placeholder }}" alt="{{ card.name }}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='{{ placeholder }}'" class="aspect-[63/88] w-full max-w-[220px] rounded-lg bg-chip object-cover">
+                </div>
+                <div class="min-w-0">
+                    <h2 class="m-0 text-xl font-bold">{{ card.name }}</h2>
+                    <div class="sub">
+                        {{ [card.set.name ?? null, card.localId ?? null ? '#' ~ card.localId : null, card.rarity ?? null]|filter(v => v)|join(' · ') }}
+                        {% if selectedSet %} · <a href="{{ path('register_owned_card', {set: selectedSet.cardSetId}) }}" class="text-link hover:underline">Other cards in this set</a>{% endif %}
+                    </div>
+
+                    <form data-dispatch-command="register-owned-card" data-redirect="{{ path('dashboard') }}" class="mt-4">
+                        <input type="hidden" name="cardId" value="{{ card.id }}">
+                        <div data-form-error class="mb-3 hidden rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
+
+                        <div class="kpi-l mb-1">Variant</div>
+                        {% for variant in variants %}
+                            <label class="it {{ variant.tracked ? 'cursor-not-allowed opacity-60 hover:bg-transparent' }}">
+                                <input type="radio" name="variantId" value="{{ variant.variantId }}" required {{ variant.tracked ? 'disabled' }} {{ not variant.tracked and selectableVariants|length == 1 ? 'checked' }} class="accent-brand">
+                                <div class="n">
+                                    <b>{{ variant.label }}{% if variant.tracked %}<span class="tag">Already tracked</span>{% endif %}</b>
+                                </div>
+                                <div class="r">
+                                    {% if variant.cardmarketTrend is not null %}
+                                        {{ m.eur(variant.cardmarketTrend) }}<small>Cardmarket trend</small>
+                                    {% else %}
+                                        <span class="sub">No Cardmarket price</span>
+                                    {% endif %}
+                                </div>
+                            </label>
+                        {% else %}
+                            <div class="empty">TCGdex lists no variants for this card.</div>
+                        {% endfor %}
+
+                        {% if selectableVariants is not empty %}
+                            <div class="mt-4 flex flex-wrap items-center gap-2">
+                                <label for="count" class="kpi-l">Count</label>
+                                <input id="count" type="number" name="count" min="1" step="1" value="1" required class="field w-20">
+                                <button type="submit" class="btn">Add to collection</button>
+                            </div>
+                        {% elseif variants is not empty %}
+                            <div class="mt-3 rounded-md border-l-4 border-brand bg-chip px-3 py-2 text-[12.5px] text-muted">Every variant of this card is already tracked. Edit it from the card page on the dashboard.</div>
+                        {% endif %}
+                    </form>
+                </div>
+            </section>
+        {% endif %}
+    </main>
+{% endblock %}

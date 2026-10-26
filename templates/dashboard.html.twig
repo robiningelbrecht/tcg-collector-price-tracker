@@ -14,12 +14,15 @@
                     {{ dashboard.cardCount }} cards · {{ cards|length }} priced · Cardmarket trend (EUR){% if dashboard.lastDate %} · {{ dashboard.lastDate|date('j M Y') }}{% endif %}
                 </div>
             </div>
-            <nav class="seg">
-                {% for option in ranges %}
-                    {% set covered = dashboard.covers(option) %}
-                    <a href="{{ path('dashboard', {range: option.value, mode: mode.value}) }}" class="{{ option == range ? 'on' }} {{ covered ? '' : 'partial' }}" title="{{ m.rangeTitle(covered, dashboard.priceDayCount) }}">{{ option.label }}</a>
-                {% endfor %}
-            </nav>
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ path('register_owned_card') }}" class="btn">Add card</a>
+                <nav class="seg">
+                    {% for option in ranges %}
+                        {% set covered = dashboard.covers(option) %}
+                        <a href="{{ path('dashboard', {range: option.value, mode: mode.value}) }}" class="{{ option == range ? 'on' }} {{ covered ? '' : 'partial' }}" title="{{ m.rangeTitle(covered, dashboard.priceDayCount) }}">{{ option.label }}</a>
+                    {% endfor %}
+                </nav>
+            </div>
         </div>
 
         {% if dashboard.firstDate and not dashboard.rangeComplete %}

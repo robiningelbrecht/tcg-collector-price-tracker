@@ -51,6 +51,19 @@ final readonly class DbalCardSetRepository extends DbalRepository implements Car
         return false === $result ? null : $this->hydrate($result);
     }
 
+    public function findAll(TcgDexLanguage $language): CardSets
+    {
+        $results = $this->connection->executeQuery(
+            'SELECT * FROM CardSet WHERE language = :language ORDER BY name COLLATE NOCASE, cardSetId',
+            ['language' => $language->value]
+        )->fetchAllAssociative();
+
+        return CardSets::fromArray(array_map(
+            $this->hydrate(...),
+            $results
+        ));
+    }
+
     /**
      * @param array<string, mixed> $result
      */

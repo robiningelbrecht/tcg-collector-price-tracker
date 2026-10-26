@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Collection\Overview;
 
+use App\Domain\Collection\VariantLabel;
 use App\Domain\Price\PriceSource;
 use App\Domain\TcgDex\TcgDexLanguage;
 use App\Infrastructure\Repository\DbalRepository;
@@ -42,7 +43,7 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
                 $prices = PricePoints::fromArray($pricesPerVariant[$cardKey.'|'.$priceVariantId] ?? []);
 
                 $variants->add(OverviewVariant::fromState(
-                    label: $this->variantLabel(
+                    label: VariantLabel::from(
                         isset($row['variantType']) ? (string) $row['variantType'] : null,
                         isset($row['variantSubtype']) ? (string) $row['variantSubtype'] : null,
                         isset($row['variantSize']) ? (string) $row['variantSize'] : null,
@@ -77,30 +78,6 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
         }
 
         return $cards;
-    }
-
-    private function variantLabel(?string $type, ?string $subtype, ?string $size, ?string $stamps): string
-    {
-        $label = match ($type) {
-            'holo' => 'Holo',
-            'reverse' => 'Reverse Holo',
-            'normal' => 'Normal',
-            null => 'Unknown variant',
-            default => $this->humanize($type),
-        };
-
-        $details = array_map($this->humanize(...), array_values(array_filter([
-            $subtype,
-            'standard' === $size ? null : $size,
-            ...(null === $stamps ? [] : explode(',', $stamps)),
-        ])));
-
-        return [] === $details ? $label : sprintf('%s (%s)', $label, implode(', ', $details));
-    }
-
-    private function humanize(string $value): string
-    {
-        return ucwords(str_replace('-', ' ', $value));
     }
 
     /**

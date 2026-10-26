@@ -11,4 +11,6 @@ interface CardSetRepository
     public function upsert(CardSet $cardSet): void;
 
     public function find(TcgDexLanguage $language, string $cardSetId): ?CardSet;
+
+    public function findAll(TcgDexLanguage $language): CardSets;
 }

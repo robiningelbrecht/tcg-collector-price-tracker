@@ -81,6 +81,32 @@ final readonly class DbalOwnedCardRepository extends DbalRepository implements O
         return false === $result ? null : $this->hydrate($result);
     }
 
+    public function findByCardId(TcgDexLanguage $language, string $cardId): OwnedCards
+    {
+        $results = $this->connection->executeQuery(
+            'SELECT * FROM OwnedCard WHERE language = :language AND cardId = :cardId ORDER BY priceVariantId',
+            ['language' => $language->value, 'cardId' => $cardId]
+        )->fetchAllAssociative();
+
+        return OwnedCards::fromArray(array_map(
+            $this->hydrate(...),
+            $results
+        ));
+    }
+
+    public function findByCardSetId(TcgDexLanguage $language, string $cardSetId): OwnedCards
+    {
+        $results = $this->connection->executeQuery(
+            'SELECT * FROM OwnedCard WHERE language = :language AND cardSetId = :cardSetId ORDER BY localId, priceVariantId',
+            ['language' => $language->value, 'cardSetId' => $cardSetId]
+        )->fetchAllAssociative();
+
+        return OwnedCards::fromArray(array_map(
+            $this->hydrate(...),
+            $results
+        ));
+    }
+
     public function findAll(): OwnedCards
     {
         $results = $this->connection->executeQuery(
