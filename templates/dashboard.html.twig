@@ -1,4 +1,9 @@
 {% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as m %}
+
+{% set range = dashboard.range %}
+{% set mode = dashboard.moverMode %}
+{% set cards = dashboard.cards %}
 
 {% block body %}
     <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
@@ -6,82 +11,213 @@
             <div>
                 <h1 class="m-0 text-2xl font-bold">Collection price tracker</h1>
                 <div class="sub">
-                    {{ cardCount }} cards · {{ pricedCardCount }} priced · Cardmarket trend (EUR){% if lastDate %} · {{ lastDate|date('j M Y') }}{% endif %}
+                    {{ dashboard.cardCount }} cards · {{ cards|length }} priced · Cardmarket trend (EUR){% if dashboard.lastDate %} · {{ dashboard.lastDate|date('j M Y') }}{% endif %}
                 </div>
             </div>
-            <div class="seg" id="range"></div>
+            <nav class="seg">
+                {% for option in ranges %}
+                    <a href="{{ path('dashboard', {range: option.value, mode: mode.value}) }}" class="{{ option == range ? 'on' }}">{{ option.label }}</a>
+                {% endfor %}
+            </nav>
         </div>
 
-        <section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3" id="kpis"></section>
+        {% if cards is empty %}
+            <div class="panel"><div class="empty">No priced cards yet.</div></div>
+        {% else %}
+            {% set best = dashboard.bestPerformer %}
+            {% set worst = dashboard.worstPerformer %}
+            <section class="mb-4 grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-3">
+                <div class="panel">
+                    <div class="kpi-l">Collection value</div>
+                    <div class="kpi-v">{{ m.eur(dashboard.totalValue) }}</div>
+                    <div class="kpi-s">{{ dashboard.pricedCopyCount }} priced copies · avg {{ m.eur(dashboard.totalValue / dashboard.pricedCopyCount) }}</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Change · {{ range.label }}</div>
+                    <div class="kpi-v"><span class="{{ m.trend(dashboard.change) }}">{{ m.signedEur(dashboard.change) }}</span></div>
+                    <div class="kpi-s"><span class="{{ m.trend(dashboard.change) }}">{{ m.pct(dashboard.changePercentage) }}</span> like-for-like</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Up / down</div>
+                    <div class="kpi-v"><span class="up">{{ dashboard.risingCount }}</span> / <span class="down">{{ dashboard.fallingCount }}</span></div>
+                    <div class="kpi-s">{{ dashboard.flatCount }} flat</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Best performer</div>
+                    <div class="kpi-v"><span class="{{ m.trend(best.stats.changePercentage) }}">{{ m.pct(best.stats.changePercentage) }}</span></div>
+                    <div class="kpi-s">{{ best.card.name }} · {{ best.card.setName }}</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Worst performer</div>
+                    <div class="kpi-v"><span class="{{ m.trend(worst.stats.changePercentage) }}">{{ m.pct(worst.stats.changePercentage) }}</span></div>
+                    <div class="kpi-s">{{ worst.card.name }} · {{ worst.card.setName }}</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Concentration</div>
+                    <div class="kpi-v">{{ (dashboard.concentration * 100)|round }}%</div>
+                    <div class="kpi-s">of value in the 10 most valuable cards</div>
+                </div>
+            </section>
 
-        <section class="mb-4 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-            <div class="panel">
-                <div class="mb-2 flex items-center justify-between gap-2"><h2 class="panel-title">Collection value</h2><span class="sub" id="pvSub"></span></div>
-                <div class="relative h-[280px]"><canvas id="pvChart"></canvas></div>
-            </div>
-            <div class="panel">
-                <div class="mb-2"><h2 class="panel-title">Value by series</h2></div>
-                <div class="relative h-[280px]"><canvas id="eraChart"></canvas></div>
-            </div>
-        </section>
+            {% set valueChart = dashboard.valueChartData %}
+            <section class="mb-4 grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <div class="panel">
+                    <div class="mb-2 flex items-center justify-between gap-2">
+                        <h2 class="panel-title">Collection value</h2>
+                        <span class="sub">{{ range.label }} high {{ m.eur(max(valueChart.values)) }} · low {{ m.eur(min(valueChart.values)) }}</span>
+                    </div>
+                    <div class="relative h-[280px]"><canvas data-chart="value" data-chart-data="{{ valueChart|json_encode }}"></canvas></div>
+                </div>
+                <div class="panel">
+                    <div class="mb-2"><h2 class="panel-title">Value by series</h2></div>
+                    <div class="relative h-[280px]"><canvas data-chart="series" data-chart-data="{{ dashboard.seriesChartData|json_encode }}"></canvas></div>
+                </div>
+            </section>
 
-        <section class="mb-4 grid gap-4 lg:grid-cols-2">
-            <div class="panel">
-                <div class="mb-2 flex items-center justify-between gap-2"><h2 class="panel-title">Top risers</h2><div class="seg sm" data-mode></div></div>
-                <div id="risers"></div>
-            </div>
-            <div class="panel">
-                <div class="mb-2 flex items-center justify-between gap-2"><h2 class="panel-title">Top fallers</h2><div class="seg sm" data-mode></div></div>
-                <div id="fallers"></div>
-            </div>
-        </section>
+            <section class="mb-4 grid gap-4 lg:grid-cols-2" id="movers">
+                {% for direction, movers in {up: dashboard.risers, down: dashboard.fallers} %}
+                    <div class="panel">
+                        <div class="mb-2 flex items-center justify-between gap-2">
+                            <h2 class="panel-title">{{ direction == 'up' ? 'Top risers' : 'Top fallers' }}</h2>
+                            <nav class="seg sm">
+                                {% for option in moverModes %}
+                                    <a href="{{ path('dashboard', {range: range.value, mode: option.value}) }}#movers" class="{{ option == mode ? 'on' }}">{{ option.label }}</a>
+                                {% endfor %}
+                            </nav>
+                        </div>
+                        {% for mover in movers %}
+                            {% set stats = mover.stats %}
+                            {% set right %}
+                                {% if mode.value == 'pct' %}
+                                    <span class="{{ m.trend(stats.changePercentage) }}">{{ m.pct(stats.changePercentage) }}</span><small>{{ m.eur(stats.first) }} → {{ m.eur(stats.last) }}</small>
+                                {% else %}
+                                    <span class="{{ m.trend(stats.change) }}">{{ m.signedEur(stats.change) }}</span><small>{{ m.pct(stats.changePercentage) }}{{ mover.card.pricedCount > 1 ? ' · ×' ~ mover.card.pricedCount }}</small>
+                                {% endif %}
+                            {% endset %}
+                            {{ m.item(mover, right) }}
+                        {% else %}
+                            <div class="empty">Nothing went {{ direction }} in this range.</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </section>
 
-        <section class="mb-4 grid gap-4 lg:grid-cols-3">
-            <div class="panel"><h2 class="panel-title mb-3">Most volatile</h2><div id="volatile"></div></div>
-            <div class="panel"><h2 class="panel-title mb-3">At or near 2-year high</h2><div id="nearHigh"></div></div>
-            <div class="panel"><h2 class="panel-title mb-3">Furthest below 2-year high</h2><div id="belowHigh"></div></div>
-        </section>
+            <section class="mb-4 grid gap-4 lg:grid-cols-3">
+                <div class="panel">
+                    <h2 class="panel-title mb-3">Most volatile</h2>
+                    {% for card in dashboard.mostVolatile %}
+                        {% set right %}{{ (card.stats.volatility * 100)|round }}%<small>annualised · {{ range.label }}</small>{% endset %}
+                        {{ m.item(card, right) }}
+                    {% endfor %}
+                </div>
+                <div class="panel">
+                    <h2 class="panel-title mb-3">At or near 2-year high</h2>
+                    {% for card in dashboard.nearTwoYearHigh %}
+                        {% set stats = card.twoYearStats %}
+                        {% set right %}
+                            {% if stats.atHigh %}
+                                <span class="up">At high</span><small>{{ m.eur(stats.high) }}</small>
+                            {% else %}
+                                {{ m.pct(stats.fromHigh) }}<small>high {{ m.eur(stats.high) }}</small>
+                            {% endif %}
+                        {% endset %}
+                        {{ m.item(card, right) }}
+                    {% endfor %}
+                </div>
+                <div class="panel">
+                    <h2 class="panel-title mb-3">Furthest below 2-year high</h2>
+                    {% for card in dashboard.furthestBelowTwoYearHigh %}
+                        {% set stats = card.twoYearStats %}
+                        {% set right %}<span class="down">{{ m.pct(stats.fromHigh) }}</span><small>high {{ m.eur(stats.high) }} · {{ stats.highOn|date('j M Y') }}</small>{% endset %}
+                        {{ m.item(card, right) }}
+                    {% endfor %}
+                </div>
+            </section>
 
-        <section class="mb-4">
-            <div class="panel">
-                <div class="mb-2 flex flex-wrap items-center justify-between gap-2"><h2 class="panel-title">Value by set</h2><span class="sub">bar colour = set performance over selected range</span></div>
-                <div class="relative h-[280px]"><canvas id="setChart"></canvas></div>
-            </div>
-        </section>
+            <section class="mb-4">
+                <div class="panel">
+                    <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <h2 class="panel-title">Value by set</h2>
+                        <span class="sub">bar colour = set performance over selected range</span>
+                    </div>
+                    <div class="relative h-[280px]"><canvas data-chart="sets" data-chart-data="{{ dashboard.setChartData|json_encode }}"></canvas></div>
+                </div>
+            </section>
 
-        <section class="panel">
-            <div class="mb-2 flex items-center justify-between gap-2"><h2 class="panel-title">All cards</h2><span class="sub" id="tblCount"></span></div>
-            <div class="flex flex-wrap items-center gap-2">
-                <input id="q" type="search" placeholder="Search card or set…" class="field min-w-0 flex-1 sm:max-w-xs">
-                <select id="eraF" class="field"><option value="">All series</option></select>
-                <select id="regF" class="field"><option value="">All regions</option><option value="EN">International</option><option value="JP">Japanese</option></select>
-            </div>
-            <div class="mt-3 overflow-x-auto"><table class="w-full border-collapse tabular-nums">
-                <thead><tr>
-                    <th data-k="rank" class="num">#</th>
-                    <th data-k="name">Card</th>
-                    <th data-k="rarity">Rarity</th>
-                    <th data-k="qty" class="num">Qty</th>
-                    <th data-k="value" class="num">Value</th>
-                    <th data-k="d7" class="num">7D</th>
-                    <th data-k="pct" class="num" id="thRange">Range</th>
-                    <th data-k="vol" class="num">Volatility</th>
-                    <th>Trend</th>
-                </tr></thead>
-                <tbody id="tbody"></tbody>
-            </table></div>
-        </section>
+            <section class="panel" data-table>
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <h2 class="panel-title">All cards</h2>
+                    <span class="sub" data-table-count>{{ cards|length }} of {{ cards|length }}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="search" placeholder="Search card or set…" class="field min-w-0 flex-1 sm:max-w-xs" data-table-search>
+                    <select class="field" data-table-filter="serie">
+                        <option value="">All series</option>
+                        {% for serie in dashboard.series %}
+                            <option value="{{ serie.id }}">{{ serie.label }}</option>
+                        {% endfor %}
+                    </select>
+                    <select class="field" data-table-filter="region">
+                        <option value="">All regions</option>
+                        <option value="en">International</option>
+                        <option value="ja">Japanese</option>
+                    </select>
+                </div>
+                <div class="mt-3 overflow-x-auto">
+                    <table class="w-full border-collapse tabular-nums">
+                        <thead><tr>
+                            <th class="num" data-sort="rank" aria-sort="ascending">#</th>
+                            <th data-sort="name" data-sort-type="string">Card</th>
+                            <th data-sort="rarity" data-sort-type="string">Rarity</th>
+                            <th class="num" data-sort="qty">Qty</th>
+                            <th class="num" data-sort="value">Value</th>
+                            <th class="num" data-sort="d7">7D</th>
+                            <th class="num" data-sort="change">{{ range.label }}</th>
+                            <th class="num" data-sort="volatility">Volatility</th>
+                            <th>Trend</th>
+                        </tr></thead>
+                        <tbody>
+                            {% for row in cards %}
+                                {% set card = row.card %}
+                                {% set stats = row.stats %}
+                                {% set d7 = row.sevenDayStats.changePercentage %}
+                                <tr data-card-url="{{ m.cardUrl(card) }}"
+                                    data-search="{{ (card.name ~ ' ' ~ card.setName ~ ' ' ~ card.rarity)|lower }}"
+                                    data-filter-serie="{{ card.serieId ?? 'unknown' }}"
+                                    data-filter-region="{{ card.language.value }}"
+                                    data-sort-rank="{{ row.rank }}"
+                                    data-sort-name="{{ card.name }}"
+                                    data-sort-rarity="{{ card.rarity }}"
+                                    data-sort-qty="{{ card.count }}"
+                                    data-sort-value="{{ row.value }}"
+                                    data-sort-d7="{{ d7 }}"
+                                    data-sort-change="{{ stats.changePercentage }}"
+                                    data-sort-volatility="{{ stats.volatility }}">
+                                    <td class="num">{{ row.rank }}</td>
+                                    <td><div class="cn">{{ m.thumb(card) }}<div><b>{{ card.name }}{{ m.tags(card) }}</b><span>{{ card.setName }} · {{ card.number }}</span></div></div></td>
+                                    <td><span class="sub">{{ card.rarity }}</span></td>
+                                    <td class="num">{{ card.count }}</td>
+                                    <td class="num"><b>{{ m.eur(row.value) }}</b>{% if card.pricedCount > 1 %}<span class="sub block">{{ m.eur(row.value / card.pricedCount) }} avg</span>{% endif %}</td>
+                                    <td class="num {{ m.trend(d7) }}">{{ m.pct(d7) }}</td>
+                                    <td class="num {{ m.trend(stats.changePercentage) }}">{{ m.pct(stats.changePercentage) }}</td>
+                                    <td class="num">{{ (stats.volatility * 100)|round }}%</td>
+                                    <td><canvas class="sp" data-sparkline="{{ row.sparkline|json_encode }}" data-trend="{{ m.trend(stats.changePercentage) }}"></canvas></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endif %}
     </main>
 
-    <div class="modal" id="modal">
+    <div class="modal" data-card-modal>
         <div class="relative w-full max-w-[980px] overflow-hidden rounded-xl border border-line bg-panel">
             <div class="flex items-center justify-between bg-dark-900 px-5 py-3">
                 <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="h-5 w-auto">
-                <button id="mclose" aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white">×</button>
+                <button aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-card-modal-close>×</button>
             </div>
-            <div id="modalBody"></div>
+            <div data-card-modal-body></div>
         </div>
     </div>
-
-    <script type="application/json" id="dashboard-data" data-placeholder="{{ asset('images/card-placeholder.svg') }}">{{ data|raw }}</script>
 {% endblock %}
