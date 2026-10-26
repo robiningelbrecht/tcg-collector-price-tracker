@@ -7,6 +7,7 @@ namespace App\Domain\Collection;
 final readonly class PriceVariantResolver
 {
     private const string STANDARD_SIZE = 'standard';
+    private const string UNLIMITED_SUBTYPE = 'unlimited';
 
     /** @var array<string, array{type: ?string, stamp: ?string}> */
     private const array TCG_COLLECTOR_VARIANTS = [
@@ -41,12 +42,10 @@ final readonly class PriceVariantResolver
             fn (array $variant): bool => self::STANDARD_SIZE === ($variant['size'] ?? self::STANDARD_SIZE),
         ));
 
-        $candidates = array_values(array_filter(
-            $variants,
-            fn (array $variant): bool => (null === $wanted['type'] || $wanted['type'] === $variant['type'])
-                && $variant['stamps'] === (null === $wanted['stamp'] ? [] : [$wanted['stamp']])
-                && $variant['subtype'] === $subtype,
-        ));
+        $candidates = $this->candidates($variants, $wanted, $subtype);
+        if ([] === $candidates && null === $subtype) {
+            $candidates = $this->candidates($variants, $wanted, self::UNLIMITED_SUBTYPE);
+        }
 
         if (1 === count($candidates)) {
             return $candidates[0]['variantId'];
@@ -81,6 +80,22 @@ final readonly class PriceVariantResolver
         }
 
         return $variants;
+    }
+
+    /**
+     * @param list<array{variantId: string, type: ?string, subtype: ?string, size: ?string, stamps: list<string>}> $variants
+     * @param array{type: ?string, stamp: ?string}                                                                 $wanted
+     *
+     * @return list<array{variantId: string, type: ?string, subtype: ?string, size: ?string, stamps: list<string>}>
+     */
+    private function candidates(array $variants, array $wanted, ?string $subtype): array
+    {
+        return array_values(array_filter(
+            $variants,
+            fn (array $variant): bool => (null === $wanted['type'] || $wanted['type'] === $variant['type'])
+                && $variant['stamps'] === (null === $wanted['stamp'] ? [] : [$wanted['stamp']])
+                && $variant['subtype'] === $subtype,
+        ));
     }
 
     /**
