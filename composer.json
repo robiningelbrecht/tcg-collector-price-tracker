@@ -19,6 +19,7 @@
         "doctrine/doctrine-bundle": "^3.3",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.7",
+        "guzzlehttp/guzzle": "^8.3",
         "symfony/console": "8.1.*",
         "symfony/css-selector": "8.1.*",
         "symfony/dom-crawler": "8.1.*",

@@ -13,3 +13,6 @@ services:
 
     Linkin\Component\DoctrineNamingStrategy\ORM\Mapping\CamelCaseNamingStrategy:
         class: Linkin\Component\DoctrineNamingStrategy\ORM\Mapping\CamelCaseNamingStrategy
+
+    GuzzleHttp\Client:
+        class: GuzzleHttp\Client
