@@ -250,7 +250,7 @@
                         <div class="n"><b>{{ card.name }}{{ m.tags(card) }}</b><span>{{ card.setName }} · {{ card.number }}</span></div>
                         <div class="r">
                             {% for variant in card.variants %}
-                                <small>{{ variant.variantName }} ×{{ variant.count }} · {{ variant.missingPriceReason ? variant.missingPriceReason.label : 'Priced' }}</small>
+                                <small>{{ variant.label }} ×{{ variant.count }} · {{ variant.missingPriceReason ? variant.missingPriceReason.label : 'Priced' }}</small>
                             {% endfor %}
                         </div>
                     </div>

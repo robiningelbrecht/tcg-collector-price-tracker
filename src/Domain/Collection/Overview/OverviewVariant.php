@@ -7,7 +7,7 @@ namespace App\Domain\Collection\Overview;
 final readonly class OverviewVariant
 {
     private function __construct(
-        private string $variantName,
+        private string $label,
         private int $count,
         private ?string $priceVariantId,
         private PricePoints $prices,
@@ -16,14 +16,14 @@ final readonly class OverviewVariant
     }
 
     public static function fromState(
-        string $variantName,
+        string $label,
         int $count,
         ?string $priceVariantId,
         PricePoints $prices,
         ?MissingPriceReason $missingPriceReason,
     ): self {
         return new self(
-            variantName: $variantName,
+            label: $label,
             count: $count,
             priceVariantId: $priceVariantId,
             prices: $prices,
@@ -31,9 +31,9 @@ final readonly class OverviewVariant
         );
     }
 
-    public function getVariantName(): string
+    public function getLabel(): string
     {
-        return $this->variantName;
+        return $this->label;
     }
 
     public function getCount(): int

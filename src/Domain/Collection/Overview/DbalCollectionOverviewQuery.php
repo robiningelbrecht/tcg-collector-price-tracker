@@ -17,7 +17,9 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
 
         $rows = $this->connection->executeQuery(
             'SELECT OwnedCard.language, OwnedCard.cardId, OwnedCard.localId, OwnedCard.name, OwnedCard.rarity, OwnedCard.image,
-                OwnedCard.cardSetId, OwnedCard.variantName, OwnedCard.count, OwnedCard.priceVariantId,
+                OwnedCard.cardSetId, OwnedCard.count, OwnedCard.priceVariantId,
+                (SELECT variant.value FROM json_each(OwnedCard.data, \'$.variants_detailed\') AS variant
+                    WHERE json_extract(variant.value, \'$.variantId\') = OwnedCard.priceVariantId LIMIT 1) AS priceVariant,
                 CardSet.name AS setName, CardSet.cardCountOfficial AS setCardCountOfficial, CardSet.releaseDate AS setReleaseDate,
                 CardSet.serieId, CardSet.serieName
             FROM OwnedCard
@@ -43,7 +45,7 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
                     : PricePoints::fromArray($pricesPerVariant[$cardKey.'|'.$priceVariantId] ?? []);
 
                 $variants->add(OverviewVariant::fromState(
-                    variantName: (string) $row['variantName'],
+                    label: $this->variantLabel(isset($row['priceVariant']) ? (string) $row['priceVariant'] : null),
                     count: (int) $row['count'],
                     priceVariantId: $priceVariantId,
                     prices: $prices,
@@ -74,6 +76,31 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
         }
 
         return $cards;
+    }
+
+    private function variantLabel(?string $priceVariant): string
+    {
+        /** @var array{type?: mixed, subtype?: mixed, size?: mixed, stamp?: mixed} $variant */
+        $variant = null === $priceVariant ? [] : json_decode($priceVariant, true, 512, JSON_THROW_ON_ERROR);
+        $type = match ($variant['type'] ?? null) {
+            'holo' => 'Holo',
+            'reverse' => 'Reverse Holo',
+            'normal' => 'Normal',
+            default => is_string($variant['type'] ?? null) ? $this->humanize($variant['type']) : 'Unknown variant',
+        };
+
+        $details = array_map($this->humanize(...), array_values(array_filter([
+            is_string($variant['subtype'] ?? null) ? $variant['subtype'] : null,
+            is_string($variant['size'] ?? null) && 'standard' !== $variant['size'] ? $variant['size'] : null,
+            ...(is_array($variant['stamp'] ?? null) ? array_filter($variant['stamp'], is_string(...)) : []),
+        ])));
+
+        return [] === $details ? $type : sprintf('%s (%s)', $type, implode(', ', $details));
+    }
+
+    private function humanize(string $value): string
+    {
+        return ucwords(str_replace('-', ' ', $value));
     }
 
     /**
