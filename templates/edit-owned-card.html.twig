@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% set placeholder = asset('images/card-placeholder.svg') %}
+
+{% block title %}Edit {{ ownedCard.name }} · TCG Price Tracker{% endblock %}
+
+{% block body %}
+    <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <h1 class="m-0 text-2xl font-bold">Edit card</h1>
+                <div class="sub">Change the variant or count, or remove it from your collection.</div>
+            </div>
+            <a href="{{ path('dashboard') }}" class="btn btn-muted">Back to dashboard</a>
+        </div>
+
+        <section class="panel grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
+            <div>
+                <img src="{{ ownedCard.image ? ownedCard.image ~ '/high.webp' : placeholder }}" alt="{{ ownedCard.name }}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='{{ placeholder }}'" class="aspect-[63/88] w-full max-w-[220px] rounded-lg bg-chip object-cover">
+            </div>
+            <div class="min-w-0">
+                <h2 class="m-0 text-xl font-bold">{{ ownedCard.name }}</h2>
+                <div class="sub">{{ [cardSet ? cardSet.name : ownedCard.cardSetId, '#' ~ ownedCard.localId, ownedCard.rarity]|filter(v => v)|join(' · ') }}</div>
+
+                <form data-dispatch-command="update-owned-card" data-redirect="{{ path('dashboard') }}" class="mt-4">
+                    <input type="hidden" name="cardId" value="{{ ownedCard.cardId }}">
+                    <input type="hidden" name="variantId" value="{{ ownedCard.priceVariantId }}">
+                    <div data-form-error class="mb-3 hidden rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
+
+                    <div class="kpi-l mb-1">Variant</div>
+                    {% for variant in variants %}
+                        {% set current = variant.variantId == ownedCard.priceVariantId %}
+                        <label class="it">
+                            <input type="radio" name="newVariantId" value="{{ variant.variantId }}" required {{ current ? 'checked' }} class="accent-brand">
+                            <div class="n">
+                                <b>{{ variant.label }}{% if current %}<span class="tag">Current</span>{% elseif variant.tracked %}<span class="tag tag-muted">Tracked ×{{ ownedCounts[variant.variantId] }}</span>{% endif %}</b>
+                                {% if variant.tracked and not current %}<span>Counts are merged when you switch to this variant</span>{% endif %}
+                            </div>
+                        </label>
+                    {% endfor %}
+
+                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                        <label for="count" class="kpi-l">Count</label>
+                        <input id="count" type="number" name="count" min="1" step="1" value="{{ ownedCard.count }}" required class="field w-20">
+                        <button type="submit" class="btn">Save</button>
+                        <button type="submit" class="btn btn-danger ml-auto" formnovalidate data-dispatch-command="remove-owned-card" data-confirm="Remove {{ ownedCard.name }} ({{ variants|filter(v => v.variantId == ownedCard.priceVariantId)|map(v => v.label)|join }}) from your collection?">Remove</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </main>
+{% endblock %}
