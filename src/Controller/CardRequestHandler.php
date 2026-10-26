@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Domain\Collection\Dashboard\CardDetail;
+use App\Domain\Collection\Dashboard\PriceRange;
 use App\Domain\Collection\Overview\CollectionOverviewQuery;
 use App\Domain\Collection\Overview\OverviewCard;
 use App\Domain\TcgDex\TcgDexLanguage;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -23,7 +26,7 @@ final readonly class CardRequestHandler
     }
 
     #[Route(path: '/cards/{language}/{cardId}', name: 'card', requirements: ['language' => 'en|ja', 'cardId' => '[^/]+'], methods: ['GET'])]
-    public function handle(string $language, string $cardId): Response
+    public function handle(Request $request, string $language, string $cardId): Response
     {
         $cards = $this->collectionOverviewQuery->find();
         $card = $cards->findByCardId(TcgDexLanguage::from($language), $cardId);
@@ -31,15 +34,13 @@ final readonly class CardRequestHandler
             throw new NotFoundHttpException(sprintf('Card %s/%s is not in the collection', $language, $cardId));
         }
 
-        $dates = $cards->getPriceDates();
-
         return new Response($this->twig->render('card.html.twig', [
-            'card' => $card,
-            'rank' => $cards->getRanks()[$card->getId()] ?? null,
-            'history' => json_encode([
-                'dates' => $dates,
-                'hist' => $card->getValuesOn($dates),
-            ], JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP),
+            'detail' => CardDetail::build(
+                cards: $cards,
+                card: $card,
+                range: PriceRange::tryFrom($request->query->getString('range')) ?? PriceRange::ONE_YEAR,
+            ),
+            'ranges' => PriceRange::cases(),
         ]));
     }
 }

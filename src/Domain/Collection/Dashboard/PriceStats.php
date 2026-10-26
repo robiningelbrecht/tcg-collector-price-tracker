@@ -73,6 +73,27 @@ final readonly class PriceStats
     }
 
     /**
+     * @param list<float|null> $values
+     *
+     * @return list<float|null>
+     */
+    public static function movingAverage(array $values, int $window): array
+    {
+        $averages = [];
+        foreach ($values as $index => $value) {
+            $known = array_filter(
+                array_slice($values, max(0, $index - $window + 1), min($window, $index + 1)),
+                fn (?float $windowValue): bool => null !== $windowValue,
+            );
+            $averages[] = null === $value || count($known) < min($window, 5)
+                ? null
+                : round(array_sum($known) / count($known), 2);
+        }
+
+        return $averages;
+    }
+
+    /**
      * @param list<float> $values
      */
     private static function standardDeviation(array $values): float

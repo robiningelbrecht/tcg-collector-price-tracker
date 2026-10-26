@@ -40,7 +40,7 @@ final readonly class CollectionDashboard
                 continue;
             }
             $card = DashboardCard::create($overviewCard, $rank, $dates, $range);
-            if ($card instanceof \App\Domain\Collection\Dashboard\DashboardCard) {
+            if ($card instanceof DashboardCard) {
                 $cards->add($card);
             }
         }

@@ -1,4 +1,7 @@
 {% import 'macros.html.twig' as m %}
+{% set card = detail.card %}
+{% set range = detail.range %}
+{% set stats = detail.stats %}
 {% set placeholder = asset('images/card-placeholder.svg') %}
 <div class="grid gap-5 p-5 md:grid-cols-[220px_minmax(0,1fr)]">
     <div>
@@ -7,17 +10,32 @@
     <div class="min-w-0">
         <h1 class="m-0 text-xl font-bold">{{ card.name }}{{ m.tags(card) }}</h1>
         <div class="sub">
-            {{ [card.setName, card.number, card.rarity, card.serieName, rank ? '#' ~ rank ~ ' in collection' : null]|filter(v => v)|join(' · ') }}
+            {{ [card.setName, card.number, card.rarity, card.serieName, detail.rank ? '#' ~ detail.rank ~ ' in collection' : null]|filter(v => v)|join(' · ') }}
         </div>
-        {% if card.priced %}
-            <div class="mt-2.5 flex flex-wrap gap-1.5" data-chips></div>
+        {% if stats %}
+            <div class="mt-2.5 flex flex-wrap gap-1.5">
+                {% for change in detail.changes %}
+                    <span class="chip">{{ change.range.label }} <b class="{{ m.trend(change.changePercentage) }}">{{ m.pct(change.changePercentage) }}</b></span>
+                {% endfor %}
+            </div>
             <div class="mb-2 mt-3.5 flex flex-wrap items-center justify-between gap-2">
                 <span class="sub">Value history · 30-day moving average dashed</span>
-                <div class="seg sm" data-range></div>
+                <nav class="seg sm">
+                    {% for option in ranges %}
+                        <button type="button" data-card-url="{{ path('card', {language: card.language.value, cardId: card.cardId, range: option.value}) }}" class="{{ option == range ? 'on' }}">{{ option.label }}</button>
+                    {% endfor %}
+                </nav>
             </div>
-            <div class="relative h-[240px]"><canvas data-chart></canvas></div>
-            <div class="mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2.5" data-stats></div>
-            <script type="application/json" data-card-history>{{ history|raw }}</script>
+            <div class="relative h-[240px]"><canvas data-chart="card" data-chart-data="{{ detail.chartData|json_encode }}"></canvas></div>
+            <div class="mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2.5">
+                <div class="stat"><div class="l">Holding value</div><div class="v">{{ m.eur(stats.last) }}</div></div>
+                <div class="stat"><div class="l">Change · {{ range.label }}</div><div class="v"><span class="{{ m.trend(stats.change) }}">{{ m.signedEur(stats.change) }} ({{ m.pct(stats.changePercentage) }})</span></div></div>
+                <div class="stat"><div class="l">High · {{ range.label }}</div><div class="v">{{ m.eur(stats.high) }} <span class="sub">{{ stats.highOn|date('j M Y') }}</span></div></div>
+                <div class="stat"><div class="l">Low · {{ range.label }}</div><div class="v">{{ m.eur(stats.low) }} <span class="sub">{{ stats.lowOn|date('j M Y') }}</span></div></div>
+                <div class="stat"><div class="l">From high</div><div class="v">{% if stats.atHigh %}<span class="up">At high</span>{% else %}<span class="down">{{ m.pct(stats.fromHigh) }}</span>{% endif %}</div></div>
+                <div class="stat"><div class="l">Max drawdown</div><div class="v"><span class="down">{{ m.pct(stats.maxDrawdown) }}</span></div></div>
+                <div class="stat"><div class="l">Volatility</div><div class="v">{{ (stats.volatility * 100)|round }}% <span class="sub">annualised</span></div></div>
+            </div>
         {% else %}
             <div class="empty mt-3">No price for this card yet.</div>
         {% endif %}

@@ -1,23 +1,24 @@
-import {initCardDetail} from './card-detail';
+import {destroyCharts, initCharts} from './charts';
 
 export function initCardModal(modal) {
     const body = modal.querySelector("[data-card-modal-body]");
-    let destroyCardDetail = null, request = 0;
+    let request = 0;
 
     async function open(url) {
         const current = ++request;
-        destroyCardDetail?.();
-        destroyCardDetail = null;
-        body.innerHTML = '<div class="empty p-5">Loading…</div>';
-        modal.classList.add("open");
-        document.body.style.overflow = "hidden";
+        if (!modal.classList.contains("open")) {
+            body.innerHTML = '<div class="empty p-5">Loading…</div>';
+            modal.classList.add("open");
+            document.body.style.overflow = "hidden";
+        }
         try {
             const response = await fetch(url);
             if (!response.ok) throw new Error(response.statusText);
             const html = await response.text();
             if (current !== request) return;
+            destroyCharts(body);
             body.innerHTML = html;
-            destroyCardDetail = initCardDetail(body);
+            initCharts(body);
         } catch {
             if (current === request) body.innerHTML = '<div class="empty p-5">Could not load this card.</div>';
         }
@@ -25,10 +26,9 @@ export function initCardModal(modal) {
 
     function close() {
         request++;
-        destroyCardDetail?.();
-        destroyCardDetail = null;
-        modal.classList.remove("open");
+        destroyCharts(body);
         body.innerHTML = "";
+        modal.classList.remove("open");
         document.body.style.overflow = "";
     }
 

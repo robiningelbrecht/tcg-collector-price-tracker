@@ -1,4 +1,4 @@
-import {css} from './price-stats';
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 function draw(canvas) {
     const values = JSON.parse(canvas.dataset.sparkline);
