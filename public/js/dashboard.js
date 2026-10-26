@@ -1,27 +1,19 @@
 import Chart from 'chart.js/auto';
+import {initCardDetail} from './card-detail';
+import {RANGES, cls, css, esc, fmtDate, fmtEur, fmtPct, fmtSEur, lineOptions, pctOver, rangeLabel, rangeStart, segButtons, windowStats} from './price-stats';
 
-const RANGES = [["7D", 7], ["30D", 30], ["90D", 90], ["6M", 182], ["1Y", 365], ["2Y", 729]];
 const PALETTE = ["#FA7035", "#F2B33D", "#106BC5", "#8B6FD6", "#3A9A3F", "#DC4A46", "#2BB3B1", "#C2569B", "#7A8286", "#A1683A"];
-
-const fmtEur = v => "€" + (Math.abs(v) >= 100 ? Math.round(v).toLocaleString("en-GB") : v.toFixed(2));
-const fmtSEur = v => (v >= 0 ? "+" : "−") + fmtEur(Math.abs(v));
-const fmtPct = p => (p >= 0 ? "+" : "−") + Math.abs(p * 100).toFixed(1) + "%";
-const cls = p => p >= 0 ? "up" : "down";
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const esc = s => String(s ?? "").replace(/[&<>"]/g, m => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[m]));
 
 export function initDashboard(dataElement) {
     const data = JSON.parse(dataElement.textContent);
     const placeholder = dataElement.dataset.placeholder;
     const labels = data.dates;
     const DAYS = labels.length;
-    const dates = labels.map(l => new Date(l + "T00:00:00Z"));
     const seriesLabel = Object.fromEntries(data.series.map(s => [s.id, s.label]));
     const seriesOrder = data.series.map(s => s.id);
 
-    const fmtDate = i => dates[i].toLocaleDateString("en-GB", {day: "numeric", month: "short", year: "numeric", timeZone: "UTC"});
-    const imgSrc = (c, size) => c.img ? `${c.img}/${size}.webp` : placeholder;
-    const thumb = c => `<img class="thumb" loading="lazy" referrerpolicy="no-referrer" src="${imgSrc(c, "low")}" alt="" onerror="this.onerror=null;this.src='${placeholder}'">`;
+    const imgSrc = c => c.img ? `${c.img}/low.webp` : placeholder;
+    const thumb = c => `<img class="thumb" loading="lazy" referrerpolicy="no-referrer" src="${imgSrc(c)}" alt="" onerror="this.onerror=null;this.src='${placeholder}'">`;
     const tags = c => (c.region === "JP" ? '<span class="tag">JP</span>' : "") + (c.qty > 1 ? `<span class="tag">×${c.qty}</span>` : "") + (c.isNew ? '<span class="tag">NEW</span>' : "");
 
     function forwardFill(s) {
@@ -29,62 +21,14 @@ export function initDashboard(dataElement) {
         return s.map(v => last = (v ?? last));
     }
 
-    function lastIdx(s) {
-        for (let i = s.length - 1; i >= 0; i--) if (s[i] != null) return i;
-        return -1;
-    }
-
     const cards = data.cards
-        .filter(c => c.pricedQty > 0 && lastIdx(c.hist) >= 0)
-        .map(c => ({...c, filled: forwardFill(c.hist), value: c.hist[lastIdx(c.hist)]}))
-        .sort((a, b) => b.value - a.value)
-        .map((c, i) => ({...c, rank: i + 1}));
+        .filter(c => c.rank != null)
+        .sort((a, b) => a.rank - b.rank)
+        .map(c => { const filled = forwardFill(c.hist); return {...c, filled, value: filled[DAYS - 1]}; });
+    const cardsById = Object.fromEntries(cards.map(c => [c.id, c]));
 
-    const rangeStart = days => Math.max(0, DAYS - 1 - days);
-
-    function windowStats(s, days) {
-        const a = rangeStart(days);
-        let fi = -1, li = -1;
-        for (let i = a; i < DAYS; i++) if (s[i] != null) { if (fi < 0) fi = i; li = i; }
-        const first = s[fi], last = s[li];
-        let hi = -Infinity, lo = Infinity, hiI = fi, loI = fi, peak = -Infinity, mdd = 0, sum = 0, sum2 = 0, n = 0, prev = null;
-        for (let i = fi; i <= li; i++) {
-            const v = s[i];
-            if (v == null) continue;
-            if (v > hi) { hi = v; hiI = i; }
-            if (v < lo) { lo = v; loI = i; }
-            peak = Math.max(peak, v);
-            mdd = Math.min(mdd, v / peak - 1);
-            if (prev != null) { const lr = Math.log(v / prev); sum += lr; sum2 += lr * lr; n++; }
-            prev = v;
-        }
-        const sd = n > 1 ? Math.sqrt((sum2 - sum * sum / n) / (n - 1)) : 0;
-        return {first, last, chg: last - first, pct: last / first - 1, hi, lo, hiI, loI, mdd, vol: sd * Math.sqrt(365), fromHi: last / hi - 1};
-    }
-
-    const pctOver = (s, days) => windowStats(s, days).pct;
-
-    function movingAvg(s, w) {
-        const out = [], q = [];
-        let acc = 0, cnt = 0;
-        for (let i = 0; i < s.length; i++) {
-            const v = s[i];
-            q.push(v);
-            if (v != null) { acc += v; cnt++; }
-            if (q.length > w) { const o = q.shift(); if (o != null) { acc -= o; cnt--; } }
-            out.push(v == null || cnt < Math.min(w, 5) ? null : Math.round(acc / cnt * 100) / 100);
-        }
-        return out;
-    }
-
-    let RANGE = 90, MODE = "pct", sortKey = "rank", sortDir = 1, current = null, mRange = 365;
+    let RANGE = 90, MODE = "pct", sortKey = "rank", sortDir = 1;
     const charts = {};
-
-    function segButtons(el, items, active, onClick) {
-        el.innerHTML = items.map(([l, v]) => `<button data-v="${v}" class="${v == active ? "on" : ""}">${l}</button>`).join("");
-        el.querySelectorAll("button").forEach(b => b.onclick = () => onClick(isNaN(+b.dataset.v) ? b.dataset.v : +b.dataset.v));
-    }
-    const rangeLabel = () => RANGES.find(r => r[1] === RANGE)[0];
 
     function render() {
         segButtons(document.getElementById("range"), RANGES, RANGE, v => { RANGE = v; render(); });
@@ -106,25 +50,12 @@ export function initDashboard(dataElement) {
         const units = cards.reduce((a, c) => a + c.pricedQty, 0);
         el.innerHTML = [
             ["Collection value", fmtEur(total), `${units} priced copies · avg ${fmtEur(total / units)}`],
-            [`Change · ${rangeLabel()}`, `<span class="${cls(chg)}">${fmtSEur(chg)}</span>`, `<span class="${cls(chg)}">${fmtPct(chg / base)}</span> like-for-like`],
+            [`Change · ${rangeLabel(RANGE)}`, `<span class="${cls(chg)}">${fmtSEur(chg)}</span>`, `<span class="${cls(chg)}">${fmtPct(chg / base)}</span> like-for-like`],
             ["Up / down", `<span class="up">${up}</span> / <span class="down">${down}</span>`, `${cards.length - up - down} flat`],
             ["Best performer", `<span class="${cls(best.pct)}">${fmtPct(best.pct)}</span>`, esc(best.name) + " · " + esc(best.set)],
             ["Worst performer", `<span class="${cls(worst.pct)}">${fmtPct(worst.pct)}</span>`, esc(worst.name) + " · " + esc(worst.set)],
             ["Concentration", ((top10 / total) * 100).toFixed(0) + "%", "of value in the 10 most valuable cards"],
         ].map(([l, v, s]) => `<div class="panel"><div class="kpi-l">${l}</div><div class="kpi-v">${v}</div><div class="kpi-s">${s}</div></div>`).join("");
-    }
-
-    function baseOpts() {
-        const muted = css("--color-muted"), grid = css("--color-line");
-        return {
-            responsive: true, maintainAspectRatio: false, animation: {duration: 250},
-            interaction: {mode: "index", intersect: false},
-            plugins: {legend: {display: false}, tooltip: {callbacks: {label: ctx => (ctx.dataset.label ? ctx.dataset.label + ": " : "") + fmtEur(ctx.parsed.y)}}},
-            scales: {
-                x: {ticks: {color: muted, maxTicksLimit: 7, maxRotation: 0, callback(v) { const l = this.getLabelForValue(v); return new Date(l + "T00:00:00Z").toLocaleDateString("en-GB", {day: "numeric", month: "short", timeZone: "UTC", ...(RANGE > 200 || mRange > 200 ? {year: "2-digit"} : {})}); }}, grid: {display: false}},
-                y: {ticks: {color: muted, callback: v => fmtEur(v)}, grid: {color: grid}}
-            }
-        };
     }
 
     function upsert(id, cfg) {
@@ -133,7 +64,7 @@ export function initDashboard(dataElement) {
     }
 
     function renderPortfolio() {
-        const a = rangeStart(RANGE);
+        const a = Math.max(0, DAYS - 1 - RANGE);
         const series = [];
         for (let i = a; i < DAYS; i++) series.push(Math.round(cards.reduce((s, c) => s + (c.filled[i] ?? 0), 0)));
         const accent = css("--color-brand");
@@ -141,8 +72,8 @@ export function initDashboard(dataElement) {
         const grad = ctx.createLinearGradient(0, 0, 0, 280);
         grad.addColorStop(0, accent + "55");
         grad.addColorStop(1, accent + "00");
-        upsert("pvChart", {type: "line", data: {labels: labels.slice(a), datasets: [{data: series, borderColor: accent, backgroundColor: grad, fill: true, pointRadius: series.length > 1 ? 0 : 3, borderWidth: 2, tension: .2}]}, options: baseOpts()});
-        document.getElementById("pvSub").textContent = series.length ? `${rangeLabel()} high ${fmtEur(Math.max(...series))} · low ${fmtEur(Math.min(...series))}` : "";
+        upsert("pvChart", {type: "line", data: {labels: labels.slice(a), datasets: [{data: series, borderColor: accent, backgroundColor: grad, fill: true, pointRadius: series.length > 1 ? 0 : 3, borderWidth: 2, tension: .2}]}, options: lineOptions(RANGE)});
+        document.getElementById("pvSub").textContent = series.length ? `${rangeLabel(RANGE)} high ${fmtEur(Math.max(...series))} · low ${fmtEur(Math.min(...series))}` : "";
     }
 
     function renderEra() {
@@ -155,9 +86,9 @@ export function initDashboard(dataElement) {
     }
 
     function item(c, right) {
-        return `<div class="it" data-i="${c.rank - 1}">${thumb(c)}<div class="n"><b>${esc(c.name)}${tags(c)}</b><span>${esc(c.set)} · ${esc(c.num)}</span></div><div class="r">${right}</div></div>`;
+        return `<div class="it" data-id="${esc(c.id)}">${thumb(c)}<div class="n"><b>${esc(c.name)}${tags(c)}</b><span>${esc(c.set)} · ${esc(c.num)}</span></div><div class="r">${right}</div></div>`;
     }
-    function bindList(el) { el.querySelectorAll(".it").forEach(n => n.onclick = () => openCard(+n.dataset.i)); }
+    function bindList(el) { el.querySelectorAll(".it").forEach(n => n.onclick = () => openCard(cardsById[n.dataset.id])); }
 
     function renderMovers() {
         const key = MODE === "pct" ? "pct" : "absChg";
@@ -175,10 +106,10 @@ export function initDashboard(dataElement) {
 
     function renderInsights() {
         const v = document.getElementById("volatile"), h = document.getElementById("nearHigh"), b = document.getElementById("belowHigh");
-        v.innerHTML = [...cards].sort((a, b) => b.vol - a.vol).slice(0, 5).map(c => item(c, `${(c.vol * 100).toFixed(0)}%<small>annualised · ${rangeLabel()}</small>`)).join("");
+        v.innerHTML = [...cards].sort((a, b) => b.vol - a.vol).slice(0, 5).map(c => item(c, `${(c.vol * 100).toFixed(0)}%<small>annualised · ${rangeLabel(RANGE)}</small>`)).join("");
         const withTwo = cards.map(c => ({c, t: windowStats(c.hist, 729)}));
         h.innerHTML = withTwo.sort((a, b) => b.t.fromHi - a.t.fromHi).slice(0, 5).map(({c, t}) => item(c, t.fromHi > -0.001 ? `<span class="up">At high</span><small>${fmtEur(t.hi)}</small>` : `${fmtPct(t.fromHi)}<small>high ${fmtEur(t.hi)}</small>`)).join("");
-        b.innerHTML = withTwo.sort((a, b) => a.t.fromHi - b.t.fromHi).slice(0, 5).map(({c, t}) => item(c, `<span class="down">${fmtPct(t.fromHi)}</span><small>high ${fmtEur(t.hi)} · ${fmtDate(t.hiI)}</small>`)).join("");
+        b.innerHTML = withTwo.sort((a, b) => a.t.fromHi - b.t.fromHi).slice(0, 5).map(({c, t}) => item(c, `<span class="down">${fmtPct(t.fromHi)}</span><small>high ${fmtEur(t.hi)} · ${fmtDate(labels[t.hiI])}</small>`)).join("");
         [v, h, b].forEach(bindList);
     }
 
@@ -188,8 +119,8 @@ export function initDashboard(dataElement) {
         const sets = Object.values(map).sort((a, b) => b.value - a.value).slice(0, 14);
         const up = css("--color-up"), down = css("--color-down");
         upsert("setChart", {type: "bar", data: {labels: sets.map(s => s.set), datasets: [{data: sets.map(s => Math.round(s.value)), backgroundColor: sets.map(s => (s.value >= s.base ? up : down) + "cc"), borderRadius: 4}]},
-            options: {...baseOpts(), indexAxis: "y", interaction: {mode: "nearest", intersect: true},
-                plugins: {legend: {display: false}, tooltip: {callbacks: {label: ctx => { const s = sets[ctx.dataIndex]; return [`${fmtEur(s.value)} · ${s.n} card${s.n > 1 ? "s" : ""}`, `${rangeLabel()}: ${fmtPct(s.value / s.base - 1)}`]; }}}},
+            options: {...lineOptions(RANGE), indexAxis: "y", interaction: {mode: "nearest", intersect: true},
+                plugins: {legend: {display: false}, tooltip: {callbacks: {label: ctx => { const s = sets[ctx.dataIndex]; return [`${fmtEur(s.value)} · ${s.n} card${s.n > 1 ? "s" : ""}`, `${rangeLabel(RANGE)}: ${fmtPct(s.value / s.base - 1)}`]; }}}},
                 scales: {x: {ticks: {color: css("--color-muted"), callback: v => fmtEur(v)}, grid: {color: css("--color-line")}}, y: {ticks: {color: css("--color-ink"), font: {size: 11.5}}, grid: {display: false}}}}});
     }
 
@@ -225,7 +156,7 @@ export function initDashboard(dataElement) {
         const era = eraSel.value, reg = document.getElementById("regF").value;
         const rows = cards.filter(c => (!q || (c.name + " " + c.set + " " + c.rarity).toLowerCase().includes(q)) && (!era || c.era === era) && (!reg || c.region === reg));
         rows.sort((a, b) => { const x = a[sortKey], y = b[sortKey]; return (typeof x === "string" ? x.localeCompare(y) : x - y) * sortDir; });
-        document.getElementById("thRange").textContent = rangeLabel();
+        document.getElementById("thRange").textContent = rangeLabel(RANGE);
         document.querySelectorAll("th[data-k]").forEach(th => { th.querySelector(".ar")?.remove(); if (th.dataset.k === sortKey) th.insertAdjacentHTML("beforeend", `<span class="ar"> ${sortDir > 0 ? "▲" : "▼"}</span>`); });
         document.getElementById("tblCount").textContent = `${rows.length} of ${cards.length}`;
         const tb = document.getElementById("tbody");
@@ -239,59 +170,48 @@ export function initDashboard(dataElement) {
             <td class="num ${cls(c.pct)}">${fmtPct(c.pct)}</td>
             <td class="num">${(c.vol * 100).toFixed(0)}%</td>
             <td><canvas class="sp"></canvas></td></tr>`).join("");
-        const a = rangeStart(RANGE), up = css("--color-up"), down = css("--color-down");
+        const up = css("--color-up"), down = css("--color-down");
         tb.querySelectorAll("tr").forEach((tr, i) => {
             const c = rows[i];
-            sparkline(tr.querySelector("canvas"), c.hist.slice(a), c.pct >= 0 ? up : down);
-            tr.onclick = () => openCard(c.rank - 1);
+            sparkline(tr.querySelector("canvas"), c.hist.slice(rangeStart(c.hist, RANGE)), c.pct >= 0 ? up : down);
+            tr.onclick = () => openCard(c);
         });
     }
 
     const modal = document.getElementById("modal");
-    function openCard(i) {
-        current = cards[i];
+    const modalBody = document.getElementById("modalBody");
+    let destroyCardDetail = null, request = 0;
+
+    async function openCard(c) {
+        const current = ++request;
+        destroyCardDetail?.();
+        destroyCardDetail = null;
+        modalBody.innerHTML = '<div class="empty p-5">Loading…</div>';
         modal.classList.add("open");
         document.body.style.overflow = "hidden";
-        renderModal();
+        try {
+            const response = await fetch(`/cards/${c.id}`);
+            if (!response.ok) throw new Error(response.statusText);
+            const html = await response.text();
+            if (current !== request) return;
+            modalBody.innerHTML = html;
+            destroyCardDetail = initCardDetail(modalBody);
+        } catch {
+            if (current === request) modalBody.innerHTML = '<div class="empty p-5">Could not load this card.</div>';
+        }
     }
-    function closeModal() { modal.classList.remove("open"); document.body.style.overflow = ""; current = null; }
+
+    function closeModal() {
+        request++;
+        destroyCardDetail?.();
+        destroyCardDetail = null;
+        modal.classList.remove("open");
+        modalBody.innerHTML = "";
+        document.body.style.overflow = "";
+    }
     document.getElementById("mclose").onclick = closeModal;
     modal.onclick = e => { if (e.target === modal) closeModal(); };
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
 
-    function renderModal() {
-        const c = current;
-        if (!c) return;
-        const img = document.getElementById("mImg");
-        img.onerror = () => { img.onerror = null; img.src = placeholder; };
-        img.src = imgSrc(c, "high");
-        document.getElementById("mName").innerHTML = esc(c.name) + tags(c);
-        document.getElementById("mMeta").textContent = [c.set, c.num, c.rarity, seriesLabel[c.era], `#${c.rank} in collection`].filter(Boolean).join(" · ");
-        document.getElementById("mChips").innerHTML = [["7D", 7], ["30D", 30], ["90D", 90], ["1Y", 365], ["2Y", 729]]
-            .map(([l, d]) => { const p = pctOver(c.hist, d); return `<span class="chip">${l} <b class="${cls(p)}">${fmtPct(p)}</b></span>`; }).join("");
-        segButtons(document.getElementById("mRange"), RANGES, mRange, v => { mRange = v; renderModal(); });
-        const a = rangeStart(mRange), st = windowStats(c.hist, mRange), ma = movingAvg(c.hist, 30);
-        const color = st.pct >= 0 ? css("--color-up") : css("--color-down");
-        const points = c.hist.slice(a);
-        upsert("mChart", {type: "line", data: {labels: labels.slice(a), datasets: [
-            {label: "Value", data: points, borderColor: color, backgroundColor: color + "22", fill: true, pointRadius: points.length > 1 ? 0 : 3, borderWidth: 2, tension: .15, spanGaps: false},
-            {label: "30D avg", data: ma.slice(a), borderColor: css("--color-muted"), borderDash: [5, 4], pointRadius: 0, borderWidth: 1.3, fill: false}
-        ]}, options: baseOpts()});
-        const rl = RANGES.find(r => r[1] === mRange)[0];
-        document.getElementById("mStats").innerHTML = [
-            ["Holding value", fmtEur(c.value) + (c.pricedQty > 1 ? ` (×${c.pricedQty})` : "")],
-            [`Change · ${rl}`, `<span class="${cls(st.pct)}">${fmtSEur(st.chg)} (${fmtPct(st.pct)})</span>`],
-            [`High · ${rl}`, `${fmtEur(st.hi)} <span class="sub">${fmtDate(st.hiI)}</span>`],
-            [`Low · ${rl}`, `${fmtEur(st.lo)} <span class="sub">${fmtDate(st.loI)}</span>`],
-            ["From high", `<span class="${st.fromHi > -0.001 ? "up" : "down"}">${st.fromHi > -0.001 ? "At high" : fmtPct(st.fromHi)}</span>`],
-            ["Max drawdown", `<span class="down">${fmtPct(st.mdd)}</span>`],
-            ["Volatility", `${(st.vol * 100).toFixed(0)}% <span class="sub">annualised</span>`],
-        ].map(([l, v]) => `<div class="stat"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
-        document.getElementById("mVariants").innerHTML = `<div class="kpi-l mb-1">Variants</div>` + c.variants.map(v => `<div class="it cursor-default">
-            <div class="n"><b>${esc(v.name)}</b><span>×${v.qty}</span></div>
-            <div class="r">${v.price != null ? `${fmtEur(v.price)}<small>${v.qty > 1 ? `${fmtEur(v.price * v.qty)} total` : "per copy"}</small>` : '<span class="sub">No price</span>'}</div></div>`).join("");
-    }
-
     render();
-    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { render(); if (current) renderModal(); });
 }

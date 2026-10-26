@@ -67,9 +67,19 @@ final readonly class OverviewCard
         return $this->cardId;
     }
 
+    public function getId(): string
+    {
+        return $this->language->value.'/'.$this->cardId;
+    }
+
     public function getLocalId(): string
     {
         return $this->localId;
+    }
+
+    public function getNumber(): string
+    {
+        return null === $this->setCardCountOfficial ? $this->localId : $this->localId.'/'.$this->setCardCountOfficial;
     }
 
     public function getName(): string
@@ -105,6 +115,11 @@ final readonly class OverviewCard
     public function getSetReleaseDate(): ?string
     {
         return $this->setReleaseDate;
+    }
+
+    public function isFromNewSet(): bool
+    {
+        return null !== $this->setReleaseDate && new \DateTimeImmutable($this->setReleaseDate) > new \DateTimeImmutable('-1 year');
     }
 
     public function getSerieId(): ?string
@@ -161,5 +176,20 @@ final readonly class OverviewCard
         $values = $this->getValueHistory();
 
         return [] === $values ? null : end($values);
+    }
+
+    /**
+     * @param list<string> $dates
+     *
+     * @return list<float|null>
+     */
+    public function getValuesOn(array $dates): array
+    {
+        $values = $this->getValueHistory();
+
+        return array_map(
+            fn (string $date): ?float => isset($values[$date]) ? round($values[$date], 2) : null,
+            $dates,
+        );
     }
 }

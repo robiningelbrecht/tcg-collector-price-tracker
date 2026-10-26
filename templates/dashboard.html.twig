@@ -1,16 +1,6 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    <header class="sticky top-0 z-40 bg-dark-900 shadow-[0_1px_0_var(--color-dark-700)]">
-        <div class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4">
-            <a href="https://www.tcgcollector.com" target="_blank" rel="noopener" class="flex items-center gap-3">
-                <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="h-6 w-auto sm:h-7">
-                <span class="hidden h-5 w-px bg-dark-600 sm:block"></span>
-                <span class="hidden text-[13px] font-semibold text-dark-300 sm:block">Price tracker</span>
-            </a>
-        </div>
-    </header>
-
     <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
         <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -89,18 +79,7 @@
                 <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="h-5 w-auto">
                 <button id="mclose" aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white">×</button>
             </div>
-            <div class="grid gap-5 p-5 md:grid-cols-[220px_minmax(0,1fr)]">
-                <div><img id="mImg" alt="" referrerpolicy="no-referrer" class="aspect-[63/88] w-full max-w-[220px] rounded-lg bg-chip object-cover"></div>
-                <div class="min-w-0">
-                    <h1 id="mName" class="m-0 text-xl font-bold"></h1>
-                    <div class="sub" id="mMeta"></div>
-                    <div class="mt-2.5 flex flex-wrap gap-1.5" id="mChips"></div>
-                    <div class="mb-2 mt-3.5 flex flex-wrap items-center justify-between gap-2"><span class="sub">Value history · 30-day moving average dashed</span><div class="seg sm" id="mRange"></div></div>
-                    <div class="relative h-[240px]"><canvas id="mChart"></canvas></div>
-                    <div class="mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2.5" id="mStats"></div>
-                    <div class="mt-3.5" id="mVariants"></div>
-                </div>
-            </div>
+            <div id="modalBody"></div>
         </div>
     </div>
 

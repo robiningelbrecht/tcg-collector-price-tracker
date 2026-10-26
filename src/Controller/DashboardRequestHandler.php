@@ -7,7 +7,6 @@ namespace App\Controller;
 use App\Domain\Collection\Overview\CollectionOverviewQuery;
 use App\Domain\Collection\Overview\OverviewCard;
 use App\Domain\Collection\Overview\OverviewCards;
-use App\Domain\Collection\Overview\OverviewVariant;
 use App\Domain\TcgDex\TcgDexLanguage;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -27,12 +26,13 @@ final readonly class DashboardRequestHandler
     public function handle(): Response
     {
         $cards = $this->collectionOverviewQuery->find();
-        $dates = $this->buildDates($cards);
+        $dates = $cards->getPriceDates();
+        $ranks = $cards->getRanks();
 
         $data = [
             'dates' => $dates,
             'series' => $this->buildSeries($cards),
-            'cards' => $cards->map(fn (OverviewCard $card): array => $this->buildCard($card, $dates)),
+            'cards' => $cards->map(fn (OverviewCard $card): array => $this->buildCard($card, $dates, $ranks[$card->getId()] ?? null)),
         ];
 
         return new Response($this->twig->render('dashboard.html.twig', [
@@ -41,37 +41,6 @@ final readonly class DashboardRequestHandler
             'pricedCardCount' => count($cards->filter(fn (OverviewCard $card): bool => $card->isPriced())),
             'data' => json_encode($data, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ]));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function buildDates(OverviewCards $cards): array
-    {
-        $knownDates = [];
-        foreach ($cards as $card) {
-            foreach (array_keys($card->getValueHistory()) as $date) {
-                $knownDates[$date] = true;
-            }
-        }
-        if ([] === $knownDates) {
-            return [];
-        }
-
-        ksort($knownDates);
-        $period = new \DatePeriod(
-            new \DateTimeImmutable(array_key_first($knownDates)),
-            new \DateInterval('P1D'),
-            new \DateTimeImmutable(array_key_last($knownDates)),
-            \DatePeriod::INCLUDE_END_DATE,
-        );
-
-        $dates = [];
-        foreach ($period as $date) {
-            $dates[] = $date->format('Y-m-d');
-        }
-
-        return $dates;
     }
 
     /**
@@ -103,32 +72,22 @@ final readonly class DashboardRequestHandler
      *
      * @return array<string, mixed>
      */
-    private function buildCard(OverviewCard $card, array $dates): array
+    private function buildCard(OverviewCard $card, array $dates, ?int $rank): array
     {
-        $valueHistory = $card->getValueHistory();
-        $releaseDate = $card->getSetReleaseDate();
-
         return [
-            'id' => $card->getLanguage()->value.'/'.$card->getCardId(),
+            'id' => $card->getId(),
+            'rank' => $rank,
             'name' => $card->getName(),
             'set' => $card->getSetName(),
-            'num' => $card->getLocalId().(null !== $card->getSetCardCountOfficial() ? '/'.$card->getSetCardCountOfficial() : ''),
+            'num' => $card->getNumber(),
             'rarity' => $card->getRarity() ?? '',
             'img' => $card->getImage(),
             'qty' => $card->getCount(),
             'pricedQty' => $card->getPricedCount(),
             'region' => TcgDexLanguage::JAPANESE === $card->getLanguage() ? 'JP' : 'EN',
             'era' => $card->getSerieId() ?? 'unknown',
-            'isNew' => null !== $releaseDate && new \DateTimeImmutable($releaseDate) > new \DateTimeImmutable('-1 year'),
-            'variants' => $card->getVariants()->map(fn (OverviewVariant $variant): array => [
-                'name' => $variant->getVariantName(),
-                'qty' => $variant->getCount(),
-                'price' => $variant->getLatestPrice()?->getTrend(),
-            ]),
-            'hist' => array_map(
-                fn (string $date): ?float => isset($valueHistory[$date]) ? round($valueHistory[$date], 2) : null,
-                $dates,
-            ),
+            'isNew' => $card->isFromNewSet(),
+            'hist' => $card->getValuesOn($dates),
         ];
     }
 }

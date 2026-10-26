@@ -22,29 +22,15 @@
   --color-brand-hover: #F64E06;
   --color-brand-soft: #FA703522;
 
-  --color-page: #FAFAFA;
-  --color-panel: #FFFFFF;
-  --color-chip: #F2F2F2;
-  --color-line: #E2E2E2;
-  --color-ink: #24292E;
-  --color-muted: #6A737D;
-  --color-link: #106BC5;
-  --color-up: #3A9A3F;
-  --color-down: #DC4A46;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-page: var(--color-dark-900);
-    --color-panel: var(--color-dark-800);
-    --color-chip: var(--color-dark-700);
-    --color-line: var(--color-dark-600);
-    --color-ink: var(--color-dark-100);
-    --color-muted: var(--color-dark-300);
-    --color-link: #3391FF;
-    --color-up: #4CC25A;
-    --color-down: #F0625E;
-  }
+  --color-page: var(--color-dark-900);
+  --color-panel: var(--color-dark-800);
+  --color-chip: var(--color-dark-700);
+  --color-line: var(--color-dark-600);
+  --color-ink: var(--color-dark-100);
+  --color-muted: var(--color-dark-300);
+  --color-link: #3391FF;
+  --color-up: #4CC25A;
+  --color-down: #F0625E;
 }
 
 @layer components {
