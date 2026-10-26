@@ -17,22 +17,14 @@ final readonly class OwnedCard
      * @param array<string, mixed> $data
      */
     private function __construct(
-        #[ORM\Id, ORM\Column(type: 'integer')]
-        private int $tcgCollectorCardId,
-        #[ORM\Id, ORM\Column(type: 'integer')]
-        private int $variantTypeId,
-        #[ORM\Id, ORM\Column(type: 'integer')]
-        private int $languageId,
-        #[ORM\Column(type: 'string')]
-        private string $variantName,
+        #[ORM\Id, ORM\Column(type: 'string')]
+        private string $cardId,
+        #[ORM\Id, ORM\Column(type: 'string')]
+        private string $priceVariantId,
         #[ORM\Column(type: 'integer')]
         private int $count,
-        #[ORM\Column(type: 'string', nullable: true)]
-        private ?string $priceVariantId,
         #[ORM\Column(type: 'string', enumType: TcgDexLanguage::class)]
         private TcgDexLanguage $language,
-        #[ORM\Column(type: 'string')]
-        private string $cardId,
         #[ORM\Column(type: 'string')]
         private string $cardSetId,
         #[ORM\Column(type: 'string')]
@@ -60,14 +52,10 @@ final readonly class OwnedCard
      * @param array<string, mixed> $data
      */
     public static function fromState(
-        int $tcgCollectorCardId,
-        int $variantTypeId,
-        int $languageId,
-        string $variantName,
-        int $count,
-        ?string $priceVariantId,
-        TcgDexLanguage $language,
         string $cardId,
+        string $priceVariantId,
+        int $count,
+        TcgDexLanguage $language,
         string $cardSetId,
         string $localId,
         string $name,
@@ -80,14 +68,10 @@ final readonly class OwnedCard
         \DateTimeImmutable $importedOn,
     ): self {
         return new self(
-            tcgCollectorCardId: $tcgCollectorCardId,
-            variantTypeId: $variantTypeId,
-            languageId: $languageId,
-            variantName: $variantName,
-            count: $count,
-            priceVariantId: $priceVariantId,
-            language: $language,
             cardId: $cardId,
+            priceVariantId: $priceVariantId,
+            count: $count,
+            language: $language,
             cardSetId: $cardSetId,
             localId: $localId,
             name: $name,
@@ -101,32 +85,12 @@ final readonly class OwnedCard
         );
     }
 
-    public function getTcgCollectorCardId(): int
-    {
-        return $this->tcgCollectorCardId;
-    }
-
-    public function getVariantTypeId(): int
-    {
-        return $this->variantTypeId;
-    }
-
-    public function getLanguageId(): int
-    {
-        return $this->languageId;
-    }
-
-    public function getVariantName(): string
-    {
-        return $this->variantName;
-    }
-
     public function getCount(): int
     {
         return $this->count;
     }
 
-    public function getPriceVariantId(): ?string
+    public function getPriceVariantId(): string
     {
         return $this->priceVariantId;
     }

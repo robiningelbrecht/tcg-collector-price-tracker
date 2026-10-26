@@ -9,7 +9,7 @@ final readonly class OverviewVariant
     private function __construct(
         private string $label,
         private int $count,
-        private ?string $priceVariantId,
+        private string $priceVariantId,
         private PricePoints $prices,
         private ?MissingPriceReason $missingPriceReason,
     ) {
@@ -18,7 +18,7 @@ final readonly class OverviewVariant
     public static function fromState(
         string $label,
         int $count,
-        ?string $priceVariantId,
+        string $priceVariantId,
         PricePoints $prices,
         ?MissingPriceReason $missingPriceReason,
     ): self {
@@ -41,7 +41,7 @@ final readonly class OverviewVariant
         return $this->count;
     }
 
-    public function getPriceVariantId(): ?string
+    public function getPriceVariantId(): string
     {
         return $this->priceVariantId;
     }

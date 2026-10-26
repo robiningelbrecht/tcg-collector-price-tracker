@@ -22,7 +22,7 @@ final readonly class DbalOwnedCardRepository extends DbalRepository implements O
     public function findAll(): OwnedCards
     {
         $results = $this->connection->executeQuery(
-            'SELECT * FROM OwnedCard ORDER BY language, cardSetId, localId, variantTypeId'
+            'SELECT * FROM OwnedCard ORDER BY language, cardSetId, localId, priceVariantId'
         )->fetchAllAssociative();
 
         return OwnedCards::fromArray(array_map(
@@ -40,14 +40,10 @@ final readonly class DbalOwnedCardRepository extends DbalRepository implements O
         $data = json_decode((string) $result['data'], true, 512, JSON_THROW_ON_ERROR);
 
         return OwnedCard::fromState(
-            tcgCollectorCardId: (int) $result['tcgCollectorCardId'],
-            variantTypeId: (int) $result['variantTypeId'],
-            languageId: (int) $result['languageId'],
-            variantName: (string) $result['variantName'],
-            count: (int) $result['count'],
-            priceVariantId: isset($result['priceVariantId']) ? (string) $result['priceVariantId'] : null,
-            language: TcgDexLanguage::from((string) $result['language']),
             cardId: (string) $result['cardId'],
+            priceVariantId: (string) $result['priceVariantId'],
+            count: (int) $result['count'],
+            language: TcgDexLanguage::from((string) $result['language']),
             cardSetId: (string) $result['cardSetId'],
             localId: (string) $result['localId'],
             name: (string) $result['name'],

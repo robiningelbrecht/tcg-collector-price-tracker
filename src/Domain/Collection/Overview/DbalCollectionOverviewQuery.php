@@ -24,7 +24,7 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
                 CardSet.serieId, CardSet.serieName
             FROM OwnedCard
             LEFT JOIN CardSet ON CardSet.language = OwnedCard.language AND CardSet.cardSetId = OwnedCard.cardSetId
-            ORDER BY OwnedCard.language, CardSet.releaseDate, OwnedCard.cardSetId, OwnedCard.localId, OwnedCard.variantTypeId'
+            ORDER BY OwnedCard.language, CardSet.releaseDate, OwnedCard.cardSetId, OwnedCard.localId, OwnedCard.priceVariantId'
         )->fetchAllAssociative();
 
         /** @var array<string, list<array<string, mixed>>> $rowsPerCard */
@@ -39,10 +39,8 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
             $variants = OverviewVariants::empty();
             foreach ($cardRows as $row) {
                 $cardKey = $row['language'].'|'.$row['cardId'];
-                $priceVariantId = isset($row['priceVariantId']) ? (string) $row['priceVariantId'] : null;
-                $prices = null === $priceVariantId
-                    ? PricePoints::empty()
-                    : PricePoints::fromArray($pricesPerVariant[$cardKey.'|'.$priceVariantId] ?? []);
+                $priceVariantId = (string) $row['priceVariantId'];
+                $prices = PricePoints::fromArray($pricesPerVariant[$cardKey.'|'.$priceVariantId] ?? []);
 
                 $variants->add(OverviewVariant::fromState(
                     label: $this->variantLabel(isset($row['priceVariant']) ? (string) $row['priceVariant'] : null),
@@ -51,7 +49,6 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
                     prices: $prices,
                     missingPriceReason: match (true) {
                         !$prices->isEmpty() => null,
-                        null === $priceVariantId => MissingPriceReason::NO_PRICE_VARIANT,
                         !isset($pricedCards[$cardKey]) => MissingPriceReason::CARD_NOT_PRICED,
                         default => MissingPriceReason::VARIANT_NOT_PRICED,
                     },
