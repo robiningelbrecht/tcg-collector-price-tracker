@@ -25,7 +25,7 @@
                 <nav class="seg sm">
                     {% for option in ranges %}
                         {% set covered = detail.covers(option) %}
-                        <button type="button" data-card-url="{{ path('card', {language: card.language.value, cardId: card.cardId, range: option.value}) }}" class="{{ option == range ? 'on' }} {{ covered ? '' : 'partial' }}" title="{{ m.rangeTitle(covered, detail.priceDayCount) }}">{{ option.label }}</button>
+                        <button type="button" data-card-url="{{ path('card', {cardId: card.cardId, range: option.value}) }}" class="{{ option == range ? 'on' }} {{ covered ? '' : 'partial' }}" title="{{ m.rangeTitle(covered, detail.priceDayCount) }}">{{ option.label }}</button>
                     {% endfor %}
                 </nav>
             </div>

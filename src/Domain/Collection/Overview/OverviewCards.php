@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Domain\Collection\Overview;
 
-use App\Domain\TcgDex\TcgDexLanguage;
 use App\Infrastructure\ValueObject\Collection;
 
 /**
@@ -17,9 +16,9 @@ final class OverviewCards extends Collection
         return OverviewCard::class;
     }
 
-    public function findByCardId(TcgDexLanguage $language, string $cardId): ?OverviewCard
+    public function findByCardId(string $cardId): ?OverviewCard
     {
-        return $this->find(fn (OverviewCard $card): bool => $card->getLanguage() === $language && $card->getCardId() === $cardId);
+        return $this->find(fn (OverviewCard $card): bool => $card->getCardId() === $cardId);
     }
 
     /**

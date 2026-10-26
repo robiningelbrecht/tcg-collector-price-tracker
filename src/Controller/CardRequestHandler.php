@@ -8,7 +8,6 @@ use App\Domain\Collection\Dashboard\CardDetail;
 use App\Domain\Collection\Dashboard\PriceRange;
 use App\Domain\Collection\Overview\CollectionOverviewQuery;
 use App\Domain\Collection\Overview\OverviewCard;
-use App\Domain\TcgDex\TcgDexLanguage;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -25,13 +24,13 @@ final readonly class CardRequestHandler
     ) {
     }
 
-    #[Route(path: '/cards/{language}/{cardId}', name: 'card', requirements: ['language' => 'en|ja', 'cardId' => '[^/]+'], methods: ['GET'])]
-    public function handle(Request $request, string $language, string $cardId): Response
+    #[Route(path: '/cards/{cardId}', name: 'card', requirements: ['cardId' => '[^/]+'], methods: ['GET'])]
+    public function handle(Request $request, string $cardId): Response
     {
         $cards = $this->collectionOverviewQuery->find();
-        $card = $cards->findByCardId(TcgDexLanguage::from($language), $cardId);
+        $card = $cards->findByCardId($cardId);
         if (!$card instanceof OverviewCard) {
-            throw new NotFoundHttpException(sprintf('Card %s/%s is not in the collection', $language, $cardId));
+            throw new NotFoundHttpException(sprintf('Card %s is not in the collection', $cardId));
         }
 
         return new Response($this->twig->render('card.html.twig', [

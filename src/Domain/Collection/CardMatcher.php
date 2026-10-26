@@ -22,18 +22,14 @@ final readonly class CardMatcher
 
     public function match(CollectionCard $collectionCard, CardSets $cardSets, \DateTimeImmutable $now): CardMatch
     {
-        $language = TcgDexLanguage::fromTcgRegion($collectionCard->getRegion());
+        $language = TcgDexLanguage::ENGLISH;
 
         if (null !== $cardId = $this->manualCardMap->find($collectionCard->getTcgCollectorCardId())) {
             return $this->fetch($collectionCard, $language, [$cardId], $now)
                 ?? CardMatch::unmatched(sprintf('Card "%s" from ManualCardMap not found in TCGdex', $cardId));
         }
 
-        if (TcgDexLanguage::JAPANESE === $language) {
-            return CardMatch::unmatched(sprintf('Japanese card, add TCG Collector card %d to ManualCardMap', $collectionCard->getTcgCollectorCardId()));
-        }
-
-        $cardSetId = $this->setNameMap->resolve($collectionCard->getSetName(), $language, $cardSets);
+        $cardSetId = $this->setNameMap->resolve($collectionCard->getSetName(), $cardSets);
         if (null === $cardSetId) {
             return CardMatch::unmatched(sprintf('Set "%s" not found in TCGdex', $collectionCard->getSetName()));
         }

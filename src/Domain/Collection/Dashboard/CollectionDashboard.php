@@ -6,7 +6,6 @@ namespace App\Domain\Collection\Dashboard;
 
 use App\Domain\Collection\Overview\OverviewCard;
 use App\Domain\Collection\Overview\OverviewCards;
-use App\Domain\TcgDex\TcgDexLanguage;
 
 final readonly class CollectionDashboard
 {
@@ -66,9 +65,6 @@ final readonly class CollectionDashboard
             $serieId = $card->getSerieId() ?? 'unknown';
             $releaseDate = $card->getSetReleaseDate() ?? '9999-12-31';
             $series[$serieId] ??= ['id' => $serieId, 'label' => $card->getSerieName() ?? $serieId, 'release' => $releaseDate];
-            if (TcgDexLanguage::ENGLISH === $card->getLanguage() && null !== $card->getSerieName()) {
-                $series[$serieId]['label'] = $card->getSerieName();
-            }
             $series[$serieId]['release'] = min($series[$serieId]['release'], $releaseDate);
         }
 

@@ -192,11 +192,6 @@
                             <option value="{{ serie.id }}">{{ serie.label }}</option>
                         {% endfor %}
                     </select>
-                    <select class="field" data-table-filter="region">
-                        <option value="">All regions</option>
-                        <option value="en">International</option>
-                        <option value="ja">Japanese</option>
-                    </select>
                 </div>
                 <div class="mt-3 overflow-x-auto">
                     <table class="w-full border-collapse tabular-nums">
@@ -219,7 +214,6 @@
                                 <tr data-card-url="{{ m.cardUrl(card) }}"
                                     data-search="{{ (card.name ~ ' ' ~ card.setName ~ ' ' ~ card.rarity)|lower }}"
                                     data-filter-serie="{{ card.serieId ?? 'unknown' }}"
-                                    data-filter-region="{{ card.language.value }}"
                                     data-sort-rank="{{ row.rank }}"
                                     data-sort-name="{{ card.name }}"
                                     data-sort-rarity="{{ card.rarity }}"

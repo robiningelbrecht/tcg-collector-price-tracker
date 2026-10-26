@@ -13,6 +13,7 @@ use App\Domain\Set\CardSet;
 use App\Domain\Set\CardSetRepository;
 use App\Domain\TcgCollector\CollectionHtmlParser;
 use App\Domain\TcgCollector\CouldNotParseCollectionHtml;
+use App\Domain\TcgCollector\TcgRegion;
 use App\Domain\TcgDex\TcgDexApi;
 use App\Domain\TcgDex\TcgDexLanguage;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -67,18 +68,22 @@ final class ImportCollectionConsoleCommand extends Command
             return Command::FAILURE;
         }
 
-        $cardSets = [];
-        foreach (TcgDexLanguage::cases() as $language) {
-            $cardSets[$language->value] = $this->cardSetRepository->findAllForLanguage($language);
-        }
+        $language = TcgDexLanguage::ENGLISH;
+        $cardSets = $this->cardSetRepository->findAllForLanguage($language);
 
         $now = new \DateTimeImmutable();
+        $skippedJapanese = 0;
         $alreadyMatched = 0;
         $newlyMatched = 0;
         $unmatched = [];
         $withoutPriceVariant = [];
 
         foreach ($output->progressIterate($collectionCards) as $collectionCard) {
+            if (TcgRegion::JAPAN === $collectionCard->getRegion()) {
+                ++$skippedJapanese;
+                continue;
+            }
+
             $ownedCard = $this->ownedCardRepository->find(
                 $collectionCard->getTcgCollectorCardId(),
                 $collectionCard->getVariantTypeId(),
@@ -91,8 +96,7 @@ final class ImportCollectionConsoleCommand extends Command
                 continue;
             }
 
-            $language = TcgDexLanguage::fromTcgRegion($collectionCard->getRegion());
-            $match = $this->cardMatcher->match($collectionCard, $cardSets[$language->value], $now);
+            $match = $this->cardMatcher->match($collectionCard, $cardSets, $now);
             $matchedCard = $match->getOwnedCard();
             if (!$matchedCard instanceof OwnedCard) {
                 $unmatched[] = [
@@ -121,10 +125,11 @@ final class ImportCollectionConsoleCommand extends Command
         }
 
         $output->success(sprintf(
-            '%d already matched, %d newly matched, %d unmatched',
+            '%d already matched, %d newly matched, %d unmatched, %d Japanese skipped',
             $alreadyMatched,
             $newlyMatched,
             count($unmatched),
+            $skippedJapanese,
         ));
 
         return Command::SUCCESS;
