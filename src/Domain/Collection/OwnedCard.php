@@ -28,6 +28,8 @@ final readonly class OwnedCard
         private string $variantName,
         #[ORM\Column(type: 'integer')]
         private int $count,
+        #[ORM\Column(type: 'string', nullable: true)]
+        private ?string $priceVariantId,
         #[ORM\Column(type: 'string', enumType: TcgDexLanguage::class)]
         private TcgDexLanguage $language,
         #[ORM\Column(type: 'string')]
@@ -81,6 +83,7 @@ final readonly class OwnedCard
             languageId: $collectionCard->getLanguageId(),
             variantName: $collectionCard->getVariantName(),
             count: $collectionCard->getCount(),
+            priceVariantId: null,
             language: $language,
             cardId: self::stringOrNull($data['id'] ?? null) ?? '',
             cardSetId: $set['id'] ?? '',
@@ -105,6 +108,7 @@ final readonly class OwnedCard
         int $languageId,
         string $variantName,
         int $count,
+        ?string $priceVariantId,
         TcgDexLanguage $language,
         string $cardId,
         string $cardSetId,
@@ -124,6 +128,7 @@ final readonly class OwnedCard
             languageId: $languageId,
             variantName: $variantName,
             count: $count,
+            priceVariantId: $priceVariantId,
             language: $language,
             cardId: $cardId,
             cardSetId: $cardSetId,
@@ -147,6 +152,7 @@ final readonly class OwnedCard
             languageId: $this->languageId,
             variantName: $this->variantName,
             count: $count,
+            priceVariantId: $this->priceVariantId,
             language: $this->language,
             cardId: $this->cardId,
             cardSetId: $this->cardSetId,
@@ -159,6 +165,30 @@ final readonly class OwnedCard
             hp: $this->hp,
             data: $this->data,
             importedOn: $importedOn,
+        );
+    }
+
+    public function withPriceVariantId(?string $priceVariantId): self
+    {
+        return self::fromState(
+            tcgCollectorCardId: $this->tcgCollectorCardId,
+            variantTypeId: $this->variantTypeId,
+            languageId: $this->languageId,
+            variantName: $this->variantName,
+            count: $this->count,
+            priceVariantId: $priceVariantId,
+            language: $this->language,
+            cardId: $this->cardId,
+            cardSetId: $this->cardSetId,
+            localId: $this->localId,
+            name: $this->name,
+            category: $this->category,
+            rarity: $this->rarity,
+            illustrator: $this->illustrator,
+            image: $this->image,
+            hp: $this->hp,
+            data: $this->data,
+            importedOn: $this->importedOn,
         );
     }
 
@@ -190,6 +220,11 @@ final readonly class OwnedCard
     public function getCount(): int
     {
         return $this->count;
+    }
+
+    public function getPriceVariantId(): ?string
+    {
+        return $this->priceVariantId;
     }
 
     public function getLanguage(): TcgDexLanguage

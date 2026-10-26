@@ -55,6 +55,7 @@ final class RefreshPricesConsoleCommand extends Command
                 continue;
             }
 
+            $this->cardPriceRepository->deleteForCardOnDate($ownedCard->getLanguage(), $ownedCard->getCardId(), $today);
             foreach ($cardPrices as $cardPrice) {
                 $this->cardPriceRepository->upsert($cardPrice);
             }

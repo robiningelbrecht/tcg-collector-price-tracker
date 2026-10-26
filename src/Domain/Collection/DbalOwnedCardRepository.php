@@ -11,10 +11,11 @@ final readonly class DbalOwnedCardRepository extends DbalRepository implements O
 {
     public function upsert(OwnedCard $ownedCard): void
     {
-        $sql = 'INSERT INTO OwnedCard (tcgCollectorCardId, variantTypeId, languageId, variantName, count, language, cardId, cardSetId, localId, name, category, rarity, illustrator, image, hp, data, importedOn)
-        VALUES (:tcgCollectorCardId, :variantTypeId, :languageId, :variantName, :count, :language, :cardId, :cardSetId, :localId, :name, :category, :rarity, :illustrator, :image, :hp, :data, :importedOn)
+        $sql = 'INSERT INTO OwnedCard (tcgCollectorCardId, variantTypeId, languageId, variantName, count, priceVariantId, language, cardId, cardSetId, localId, name, category, rarity, illustrator, image, hp, data, importedOn)
+        VALUES (:tcgCollectorCardId, :variantTypeId, :languageId, :variantName, :count, :priceVariantId, :language, :cardId, :cardSetId, :localId, :name, :category, :rarity, :illustrator, :image, :hp, :data, :importedOn)
         ON CONFLICT (tcgCollectorCardId, variantTypeId, languageId) DO UPDATE SET
             count = excluded.count,
+            priceVariantId = excluded.priceVariantId,
             importedOn = excluded.importedOn';
 
         $this->connection->executeStatement($sql, [
@@ -23,6 +24,7 @@ final readonly class DbalOwnedCardRepository extends DbalRepository implements O
             'languageId' => $ownedCard->getLanguageId(),
             'variantName' => $ownedCard->getVariantName(),
             'count' => $ownedCard->getCount(),
+            'priceVariantId' => $ownedCard->getPriceVariantId(),
             'language' => $ownedCard->getLanguage()->value,
             'cardId' => $ownedCard->getCardId(),
             'cardSetId' => $ownedCard->getCardSetId(),
@@ -88,6 +90,7 @@ final readonly class DbalOwnedCardRepository extends DbalRepository implements O
             languageId: (int) $result['languageId'],
             variantName: (string) $result['variantName'],
             count: (int) $result['count'],
+            priceVariantId: isset($result['priceVariantId']) ? (string) $result['priceVariantId'] : null,
             language: TcgDexLanguage::from((string) $result['language']),
             cardId: (string) $result['cardId'],
             cardSetId: (string) $result['cardSetId'],

@@ -14,49 +14,60 @@ final readonly class CardPriceExtractor
     public function extract(TcgDexLanguage $language, string $cardId, array $card, \DateTimeImmutable $date): CardPrices
     {
         $cardPrices = CardPrices::empty();
-        $variants = is_array($card['variants_detailed'] ?? null) ? $card['variants_detailed'] : [];
+        $variants = array_values(array_filter(
+            is_array($card['variants_detailed'] ?? null) ? $card['variants_detailed'] : [],
+            fn (mixed $variant): bool => is_array($variant) && is_string($variant['variantId'] ?? null),
+        ));
+        $pricing = is_array($card['pricing'] ?? null) ? $card['pricing'] : [];
+        $topCardmarket = is_array($pricing['cardmarket'] ?? null) ? $pricing['cardmarket'] : null;
+        $plainVariantsWithoutCardmarket = $this->plainVariantsWithoutCardmarket($variants);
+        $topCardmarketIsClaimed = null !== $topCardmarket && in_array(
+            $topCardmarket['idProduct'] ?? null,
+            array_map(fn (array $variant): mixed => is_array($variant['thirdParty'] ?? null) ? ($variant['thirdParty']['cardmarket'] ?? null) : null, $variants),
+            true,
+        );
 
         foreach ($variants as $variant) {
-            if (!is_array($variant) || !is_string($variant['variantId'] ?? null) || !is_array($variant['pricing'] ?? null)) {
-                continue;
-            }
-
             $variantType = $this->stringOrNull($variant['type'] ?? null);
             $context = [
                 'language' => $language,
                 'cardId' => $cardId,
-                'variantId' => $variant['variantId'],
+                'variantId' => (string) $variant['variantId'],
                 'date' => $date,
                 'variantType' => $variantType,
                 'variantSubtype' => $this->stringOrNull($variant['subtype'] ?? null),
                 'variantSize' => $this->stringOrNull($variant['size'] ?? null),
                 'variantStamps' => is_array($variant['stamp'] ?? null) ? implode(',', array_filter($variant['stamp'], is_string(...))) : null,
             ];
+            $variantPricing = is_array($variant['pricing'] ?? null) ? $variant['pricing'] : [];
 
-            if (is_array($variant['pricing']['cardmarket'] ?? null)) {
-                $this->addCardmarketPrice($cardPrices, $context, $variant['pricing']['cardmarket'], '');
+            if (is_array($variantPricing['cardmarket'] ?? null)) {
+                $this->addCardmarketPrice($cardPrices, $context, $variantPricing['cardmarket'], '');
+            } elseif (null !== $topCardmarket && !$topCardmarketIsClaimed && in_array($variant, $plainVariantsWithoutCardmarket[$this->isReverse($variant) ? 'reverse' : 'other'], true)
+                && 1 === count($plainVariantsWithoutCardmarket[$this->isReverse($variant) ? 'reverse' : 'other'])) {
+                $this->addCardmarketPrice($cardPrices, $context, $topCardmarket, $this->isReverse($variant) ? '-holo' : '');
             }
 
-            if (is_array($tcgplayer = $variant['pricing']['tcgplayer'] ?? null)) {
+            if (is_array($tcgplayer = $variantPricing['tcgplayer'] ?? null)) {
                 $prices = null !== $variantType && is_array($tcgplayer[$variantType] ?? null) ? $tcgplayer[$variantType] : $tcgplayer;
                 $this->addTcgplayerPrice($cardPrices, $context, $tcgplayer, $prices);
             }
         }
 
-        if (!$cardPrices->isEmpty() || !is_array($card['pricing'] ?? null)) {
+        if ([] !== $variants) {
             return $cardPrices;
         }
 
-        if (is_array($cardmarket = $card['pricing']['cardmarket'] ?? null)) {
-            foreach (['normal' => '', 'holo' => '-holo'] as $variantType => $suffix) {
-                $this->addCardmarketPrice($cardPrices, $this->fallbackContext($language, $cardId, $date, $variantType), $cardmarket, $suffix);
+        if (null !== $topCardmarket) {
+            foreach (['base' => [null, ''], 'reverse' => ['reverse', '-holo']] as $variantId => [$variantType, $suffix]) {
+                $this->addCardmarketPrice($cardPrices, $this->fallbackContext($language, $cardId, $date, $variantId, $variantType), $topCardmarket, $suffix);
             }
         }
 
-        if (is_array($tcgplayer = $card['pricing']['tcgplayer'] ?? null)) {
+        if (is_array($tcgplayer = $pricing['tcgplayer'] ?? null)) {
             foreach ($tcgplayer as $variantType => $prices) {
                 if (is_array($prices)) {
-                    $this->addTcgplayerPrice($cardPrices, $this->fallbackContext($language, $cardId, $date, (string) $variantType), $tcgplayer, $prices);
+                    $this->addTcgplayerPrice($cardPrices, $this->fallbackContext($language, $cardId, $date, (string) $variantType, (string) $variantType), $tcgplayer, $prices);
                 }
             }
         }
@@ -65,14 +76,41 @@ final readonly class CardPriceExtractor
     }
 
     /**
+     * @param list<array<mixed>> $variants
+     *
+     * @return array{reverse: list<array<mixed>>, other: list<array<mixed>>}
+     */
+    private function plainVariantsWithoutCardmarket(array $variants): array
+    {
+        $plain = ['reverse' => [], 'other' => []];
+        foreach ($variants as $variant) {
+            $hasCardmarket = is_array($variant['pricing'] ?? null) && is_array($variant['pricing']['cardmarket'] ?? null);
+            if ($hasCardmarket || !empty($variant['stamp']) || null !== ($variant['subtype'] ?? null)) {
+                continue;
+            }
+            $plain[$this->isReverse($variant) ? 'reverse' : 'other'][] = $variant;
+        }
+
+        return $plain;
+    }
+
+    /**
+     * @param array<mixed> $variant
+     */
+    private function isReverse(array $variant): bool
+    {
+        return 'reverse' === ($variant['type'] ?? null);
+    }
+
+    /**
      * @return array{language: TcgDexLanguage, cardId: string, variantId: string, date: \DateTimeImmutable, variantType: ?string, variantSubtype: ?string, variantSize: ?string, variantStamps: ?string}
      */
-    private function fallbackContext(TcgDexLanguage $language, string $cardId, \DateTimeImmutable $date, string $variantType): array
+    private function fallbackContext(TcgDexLanguage $language, string $cardId, \DateTimeImmutable $date, string $variantId, ?string $variantType): array
     {
         return [
             'language' => $language,
             'cardId' => $cardId,
-            'variantId' => $variantType,
+            'variantId' => $variantId,
             'date' => $date,
             'variantType' => $variantType,
             'variantSubtype' => null,
