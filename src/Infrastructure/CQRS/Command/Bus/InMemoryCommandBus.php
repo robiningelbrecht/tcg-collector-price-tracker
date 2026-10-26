@@ -1,0 +1,52 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\CQRS\Command\Bus;
+
+use App\Infrastructure\CQRS\Command\Command;
+use App\Infrastructure\CQRS\Command\CommandHandler;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+use Symfony\Component\Messenger\Exception\HandlerFailedException;
+use Symfony\Component\Messenger\Exception\NoHandlerForMessageException;
+use Symfony\Component\Messenger\Handler\HandlersLocator;
+use Symfony\Component\Messenger\MessageBus;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Messenger\Middleware\HandleMessageMiddleware;
+
+final class InMemoryCommandBus implements CommandBus
+{
+    private MessageBusInterface $bus;
+
+    /**
+     * @param iterable<CommandHandler> $commandHandlers
+     */
+    public function __construct(
+        #[AutowireIterator('app.command_handler')]
+        private readonly iterable $commandHandlers,
+        private readonly TransactionalCommandMiddleware $transactionalCommandMiddleware,
+    ) {
+    }
+
+    public function dispatch(Command $command): void
+    {
+        $this->bus ??= new MessageBus([
+            $this->transactionalCommandMiddleware,
+            new HandleMessageMiddleware(
+                new HandlersLocator(
+                    CommandHandlerLocator::fromCallables($this->commandHandlers),
+                ),
+            ),
+        ]);
+
+        try {
+            $this->bus->dispatch($command);
+        } catch (NoHandlerForMessageException) {
+            throw new NoHandlerForMessageException($command::class);
+        } catch (HandlerFailedException $e) {
+            if (!is_null($e->getPrevious())) {
+                throw $e->getPrevious();
+            }
+        }
+    }
+}
