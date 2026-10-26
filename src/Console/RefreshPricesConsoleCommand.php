@@ -6,8 +6,7 @@ namespace App\Console;
 
 use App\Domain\Collection\OwnedCard;
 use App\Domain\Collection\OwnedCardRepository;
-use App\Domain\Price\CardPriceExtractor;
-use App\Domain\Price\CardPriceRepository;
+use App\Domain\Price\CardPriceRecorder;
 use App\Domain\TcgDex\TcgDexApi;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,8 +20,7 @@ final class RefreshPricesConsoleCommand extends Command
     public function __construct(
         private readonly OwnedCardRepository $ownedCardRepository,
         private readonly TcgDexApi $tcgDexApi,
-        private readonly CardPriceExtractor $cardPriceExtractor,
-        private readonly CardPriceRepository $cardPriceRepository,
+        private readonly CardPriceRecorder $cardPriceRecorder,
     ) {
         parent::__construct();
     }
@@ -49,16 +47,12 @@ final class RefreshPricesConsoleCommand extends Command
                 continue;
             }
 
-            $cardPrices = $this->cardPriceExtractor->extract($ownedCard->getLanguage(), $ownedCard->getCardId(), $card, $today);
+            $cardPrices = $this->cardPriceRecorder->record($ownedCard->getLanguage(), $ownedCard->getCardId(), $card, $today);
             if ($cardPrices->isEmpty()) {
                 $withoutPrice[] = [$ownedCard->getCardId(), $ownedCard->getName(), 'No prices in TCGdex'];
                 continue;
             }
 
-            $this->cardPriceRepository->deleteForCardOnDate($ownedCard->getLanguage(), $ownedCard->getCardId(), $today);
-            foreach ($cardPrices as $cardPrice) {
-                $this->cardPriceRepository->upsert($cardPrice);
-            }
             ++$pricedCards;
             $priceRows += count($cardPrices);
         }
