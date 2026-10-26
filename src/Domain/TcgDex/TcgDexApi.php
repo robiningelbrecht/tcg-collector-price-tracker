@@ -31,6 +31,14 @@ final readonly class TcgDexApi
     /**
      * @return array<string, mixed>|null
      */
+    public function getSet(TcgDexLanguage $language, string $cardSetId): ?array
+    {
+        return $this->get($language->value.'/sets/'.rawurlencode($cardSetId));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getCard(TcgDexLanguage $language, string $cardId): ?array
     {
         return $this->get($language->value.'/cards/'.rawurlencode($cardId));

@@ -101,6 +101,143 @@ final readonly class OwnedCard
         );
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
+    public static function fromTcgDex(
+        TcgDexLanguage $language,
+        array $data,
+        string $variantId,
+        int $count,
+        \DateTimeImmutable $importedOn,
+    ): self {
+        unset($data['pricing']);
+        if (is_array($data['variants_detailed'] ?? null)) {
+            foreach (array_keys($data['variants_detailed']) as $index) {
+                if (is_array($data['variants_detailed'][$index])) {
+                    unset($data['variants_detailed'][$index]['pricing']);
+                }
+            }
+        }
+        /** @var array{id?: string} $set */
+        $set = is_array($data['set'] ?? null) ? $data['set'] : [];
+        $variant = self::findVariant($data, $variantId);
+
+        return new self(
+            cardId: self::stringOrNull($data['id'] ?? null) ?? '',
+            priceVariantId: $variantId,
+            variantType: $variant['type'],
+            variantSubtype: $variant['subtype'],
+            variantSize: $variant['size'],
+            variantStamps: $variant['stamps'],
+            count: $count,
+            language: $language,
+            cardSetId: $set['id'] ?? '',
+            localId: self::stringOrNull($data['localId'] ?? null) ?? '',
+            name: self::stringOrNull($data['name'] ?? null) ?? '',
+            category: self::stringOrNull($data['category'] ?? null),
+            rarity: self::stringOrNull($data['rarity'] ?? null),
+            illustrator: self::stringOrNull($data['illustrator'] ?? null),
+            image: self::stringOrNull($data['image'] ?? null),
+            hp: is_int($data['hp'] ?? null) ? $data['hp'] : null,
+            data: $data,
+            importedOn: $importedOn,
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public static function hasVariant(array $data, string $variantId): bool
+    {
+        try {
+            self::findVariant($data, $variantId);
+        } catch (\InvalidArgumentException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function withVariant(string $variantId): self
+    {
+        $variant = self::findVariant($this->data, $variantId);
+
+        return new self(
+            cardId: $this->cardId,
+            priceVariantId: $variantId,
+            variantType: $variant['type'],
+            variantSubtype: $variant['subtype'],
+            variantSize: $variant['size'],
+            variantStamps: $variant['stamps'],
+            count: $this->count,
+            language: $this->language,
+            cardSetId: $this->cardSetId,
+            localId: $this->localId,
+            name: $this->name,
+            category: $this->category,
+            rarity: $this->rarity,
+            illustrator: $this->illustrator,
+            image: $this->image,
+            hp: $this->hp,
+            data: $this->data,
+            importedOn: $this->importedOn,
+        );
+    }
+
+    public function withCount(int $count): self
+    {
+        return new self(
+            cardId: $this->cardId,
+            priceVariantId: $this->priceVariantId,
+            variantType: $this->variantType,
+            variantSubtype: $this->variantSubtype,
+            variantSize: $this->variantSize,
+            variantStamps: $this->variantStamps,
+            count: $count,
+            language: $this->language,
+            cardSetId: $this->cardSetId,
+            localId: $this->localId,
+            name: $this->name,
+            category: $this->category,
+            rarity: $this->rarity,
+            illustrator: $this->illustrator,
+            image: $this->image,
+            hp: $this->hp,
+            data: $this->data,
+            importedOn: $this->importedOn,
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     *
+     * @return array{type: ?string, subtype: ?string, size: ?string, stamps: ?string}
+     */
+    private static function findVariant(array $data, string $variantId): array
+    {
+        $variants = is_array($data['variants_detailed'] ?? null) ? $data['variants_detailed'] : [];
+        foreach ($variants as $variant) {
+            if (!is_array($variant) || $variantId !== ($variant['variantId'] ?? null)) {
+                continue;
+            }
+
+            return [
+                'type' => self::stringOrNull($variant['type'] ?? null),
+                'subtype' => self::stringOrNull($variant['subtype'] ?? null),
+                'size' => self::stringOrNull($variant['size'] ?? null),
+                'stamps' => is_array($variant['stamp'] ?? null) ? implode(',', array_filter($variant['stamp'], is_string(...))) : null,
+            ];
+        }
+
+        throw new \InvalidArgumentException(sprintf('Card %s has no variant %s', self::stringOrNull($data['id'] ?? null) ?? '', $variantId));
+    }
+
+    private static function stringOrNull(mixed $value): ?string
+    {
+        return is_string($value) ? $value : null;
+    }
+
     public function getCount(): int
     {
         return $this->count;

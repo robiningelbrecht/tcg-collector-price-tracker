@@ -9,6 +9,68 @@ use App\Infrastructure\Repository\DbalRepository;
 
 final readonly class DbalOwnedCardRepository extends DbalRepository implements OwnedCardRepository
 {
+    public function save(OwnedCard $ownedCard): void
+    {
+        $sql = 'INSERT INTO OwnedCard (cardId, priceVariantId, variantType, variantSubtype, variantSize, variantStamps, count, language, cardSetId, localId, name, category, rarity, illustrator, image, hp, data, importedOn)
+        VALUES (:cardId, :priceVariantId, :variantType, :variantSubtype, :variantSize, :variantStamps, :count, :language, :cardSetId, :localId, :name, :category, :rarity, :illustrator, :image, :hp, :data, :importedOn)
+        ON CONFLICT (cardId, priceVariantId) DO UPDATE SET
+            variantType = excluded.variantType,
+            variantSubtype = excluded.variantSubtype,
+            variantSize = excluded.variantSize,
+            variantStamps = excluded.variantStamps,
+            count = excluded.count,
+            language = excluded.language,
+            cardSetId = excluded.cardSetId,
+            localId = excluded.localId,
+            name = excluded.name,
+            category = excluded.category,
+            rarity = excluded.rarity,
+            illustrator = excluded.illustrator,
+            image = excluded.image,
+            hp = excluded.hp,
+            data = excluded.data,
+            importedOn = excluded.importedOn';
+
+        $this->connection->executeStatement($sql, [
+            'cardId' => $ownedCard->getCardId(),
+            'priceVariantId' => $ownedCard->getPriceVariantId(),
+            'variantType' => $ownedCard->getVariantType(),
+            'variantSubtype' => $ownedCard->getVariantSubtype(),
+            'variantSize' => $ownedCard->getVariantSize(),
+            'variantStamps' => $ownedCard->getVariantStamps(),
+            'count' => $ownedCard->getCount(),
+            'language' => $ownedCard->getLanguage()->value,
+            'cardSetId' => $ownedCard->getCardSetId(),
+            'localId' => $ownedCard->getLocalId(),
+            'name' => $ownedCard->getName(),
+            'category' => $ownedCard->getCategory(),
+            'rarity' => $ownedCard->getRarity(),
+            'illustrator' => $ownedCard->getIllustrator(),
+            'image' => $ownedCard->getImage(),
+            'hp' => $ownedCard->getHp(),
+            'data' => json_encode($ownedCard->getData(), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'importedOn' => $ownedCard->getImportedOn()->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function delete(OwnedCard $ownedCard): void
+    {
+        $this->connection->executeStatement(
+            'DELETE FROM OwnedCard WHERE cardId = :cardId AND priceVariantId = :priceVariantId',
+            ['cardId' => $ownedCard->getCardId(), 'priceVariantId' => $ownedCard->getPriceVariantId()]
+        );
+    }
+
+    public function find(string $cardId, string $priceVariantId): ?OwnedCard
+    {
+        $result = $this->connection->executeQuery(
+            'SELECT * FROM OwnedCard WHERE cardId = :cardId AND priceVariantId = :priceVariantId',
+            ['cardId' => $cardId, 'priceVariantId' => $priceVariantId]
+        )->fetchAssociative();
+
+        return false === $result ? null : $this->hydrate($result);
+    }
+
     public function findOneByCardId(TcgDexLanguage $language, string $cardId): ?OwnedCard
     {
         $result = $this->connection->executeQuery(
