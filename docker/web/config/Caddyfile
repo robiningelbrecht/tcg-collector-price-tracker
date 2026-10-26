@@ -1,0 +1,51 @@
+{
+	http_port 8080
+	auto_https off
+
+	frankenphp {
+		max_threads auto
+		worker {
+			file ./public/index.php
+			num {$FRANKENPHP_NUM_WORKERS:2}
+		}
+	}
+
+	log {
+		output stdout
+		format console
+		level {$CADDY_LOG_LEVEL:ERROR}
+	}
+}
+
+:8080 {
+	root /var/www/public
+	encode zstd br gzip
+
+	header {
+		?Permissions-Policy "browsing-topics=()"
+		?X-Content-Type-Options "nosniff"
+		?Referrer-Policy "strict-origin-when-cross-origin"
+		?X-Frame-Options "SAMEORIGIN"
+		?Content-Security-Policy "frame-ancestors 'self'"
+		?Cache-Control "no-cache, no-store, must-revalidate"
+	}
+
+	handle {
+		@phpRoute {
+			not file {path}
+		}
+
+		rewrite @phpRoute index.php
+
+		@frontController path index.php
+		php @frontController
+	}
+
+	handle_errors {
+		respond "{err.status_code} {err.status_text}"
+	}
+
+	file_server {
+		hide *.php *.yaml *.yml */log
+	}
+}

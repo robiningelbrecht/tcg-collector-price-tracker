@@ -6,6 +6,9 @@ dc:
 dcr:
 	@make dc cmd="run --rm php-cli $(cmd)"
 
+up:
+	@make dc cmd="up -d"
+
 stop:
 	@make dc cmd="stop"
 
