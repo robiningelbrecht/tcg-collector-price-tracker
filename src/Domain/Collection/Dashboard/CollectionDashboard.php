@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Collection\Dashboard;
 
+use App\Domain\Collection\Overview\OverviewCard;
 use App\Domain\Collection\Overview\OverviewCards;
 use App\Domain\TcgDex\TcgDexLanguage;
 
@@ -94,9 +95,46 @@ final readonly class CollectionDashboard
         return [] === $this->dates ? null : new \DateTimeImmutable(array_last($this->dates));
     }
 
+    public function getFirstDate(): ?\DateTimeImmutable
+    {
+        return [] === $this->dates ? null : new \DateTimeImmutable($this->dates[0]);
+    }
+
+    public function getHistoryDays(): int
+    {
+        return max(0, count($this->dates) - 1);
+    }
+
+    public function getPriceDayCount(): int
+    {
+        return count($this->dates);
+    }
+
+    public function covers(PriceRange $range): bool
+    {
+        return $range->isCoveredBy($this->getHistoryDays());
+    }
+
+    public function getTwoYearHighSince(): ?\DateTimeImmutable
+    {
+        return $this->covers(PriceRange::TWO_YEARS) ? null : $this->getFirstDate();
+    }
+
+    public function isRangeComplete(): bool
+    {
+        return $this->covers($this->range);
+    }
+
     public function getCardCount(): int
     {
         return count($this->overviewCards);
+    }
+
+    public function getUnpricedCards(): OverviewCards
+    {
+        $ranks = $this->overviewCards->getRanks();
+
+        return $this->overviewCards->filter(fn (OverviewCard $card): bool => !isset($ranks[$card->getId()]));
     }
 
     public function getCards(): DashboardCards
@@ -109,14 +147,16 @@ final readonly class CollectionDashboard
         return $this->cards->getTotalValue();
     }
 
-    public function getChange(): float
+    public function getChange(): ?float
     {
-        return $this->getTotalValue() - $this->cards->getBaseValue();
+        $cards = $this->cards->withCompleteStats();
+
+        return $cards->isEmpty() ? null : $cards->getTotalValue() - $cards->getBaseValue();
     }
 
-    public function getChangePercentage(): float
+    public function getChangePercentage(): ?float
     {
-        return $this->getTotalValue() / $this->cards->getBaseValue() - 1;
+        return $this->cards->withCompleteStats()->getChangePercentage();
     }
 
     public function getPricedCopyCount(): int
@@ -126,17 +166,17 @@ final readonly class CollectionDashboard
 
     public function getRisingCount(): int
     {
-        return count($this->cards->filter(fn (DashboardCard $card): bool => $card->getStats()->getChangePercentage() > 0.001));
+        return count($this->cards->withCompleteStats()->filter(fn (DashboardCard $card): bool => $card->getStats()->getChangePercentage() > 0.001));
     }
 
     public function getFallingCount(): int
     {
-        return count($this->cards->filter(fn (DashboardCard $card): bool => $card->getStats()->getChangePercentage() < -0.001));
+        return count($this->cards->withCompleteStats()->filter(fn (DashboardCard $card): bool => $card->getStats()->getChangePercentage() < -0.001));
     }
 
     public function getFlatCount(): int
     {
-        return count($this->cards) - $this->getRisingCount() - $this->getFallingCount();
+        return count($this->cards->withCompleteStats()) - $this->getRisingCount() - $this->getFallingCount();
     }
 
     public function getBestPerformer(): ?DashboardCard
@@ -173,7 +213,7 @@ final readonly class CollectionDashboard
 
     public function getMostVolatile(): DashboardCards
     {
-        return $this->cards
+        return $this->cards->withCompleteStats()
             ->sortedBy(fn (DashboardCard $a, DashboardCard $b): int => $b->getStats()->getVolatility() <=> $a->getStats()->getVolatility())
             ->slice(0, self::INSIGHT_COUNT);
     }
@@ -188,6 +228,7 @@ final readonly class CollectionDashboard
     public function getFurthestBelowTwoYearHigh(): DashboardCards
     {
         return $this->cards
+            ->filter(fn (DashboardCard $card): bool => !$card->getTwoYearStats()->isAtHigh())
             ->sortedBy(fn (DashboardCard $a, DashboardCard $b): int => $a->getTwoYearStats()->getFromHigh() <=> $b->getTwoYearStats()->getFromHigh())
             ->slice(0, self::INSIGHT_COUNT);
     }
@@ -247,7 +288,7 @@ final readonly class CollectionDashboard
     }
 
     /**
-     * @return array{labels: list<string>, values: list<int>, counts: list<int>, changes: list<float>, range: string}
+     * @return array{labels: list<string>, values: list<int>, counts: list<int>, changes: list<float|null>, range: string}
      */
     public function getSetChartData(): array
     {
@@ -264,13 +305,13 @@ final readonly class CollectionDashboard
             'labels' => array_map(strval(...), array_keys($sets)),
             'values' => array_values(array_map(fn (DashboardCards $cards): int => (int) round($cards->getTotalValue()), $sets)),
             'counts' => array_values(array_map(count(...), $sets)),
-            'changes' => array_values(array_map(fn (DashboardCards $cards): float => $cards->getTotalValue() / $cards->getBaseValue() - 1, $sets)),
+            'changes' => array_values(array_map(fn (DashboardCards $cards): ?float => $cards->withCompleteStats()->getChangePercentage(), $sets)),
             'range' => $this->range->getLabel(),
         ];
     }
 
     private function sortedByChange(MoverMode $mode): DashboardCards
     {
-        return $this->cards->sortedBy(fn (DashboardCard $a, DashboardCard $b): int => $b->getChange($mode) <=> $a->getChange($mode));
+        return $this->cards->withCompleteStats()->sortedBy(fn (DashboardCard $a, DashboardCard $b): int => $b->getChange($mode) <=> $a->getChange($mode));
     }
 }

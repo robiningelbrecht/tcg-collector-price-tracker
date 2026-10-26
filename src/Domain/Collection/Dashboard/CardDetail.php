@@ -59,6 +59,21 @@ final readonly class CardDetail
         return $this->range;
     }
 
+    public function getHistoryDays(): int
+    {
+        return max(0, count($this->dates) - 1);
+    }
+
+    public function getPriceDayCount(): int
+    {
+        return count($this->dates);
+    }
+
+    public function covers(PriceRange $range): bool
+    {
+        return $range->isCoveredBy($this->getHistoryDays());
+    }
+
     public function getStats(): ?PriceStats
     {
         return PriceStats::calculate($this->dates, $this->values, $this->range);
@@ -72,7 +87,7 @@ final readonly class CardDetail
         $changes = [];
         foreach (self::CHANGE_RANGES as $range) {
             $stats = PriceStats::calculate($this->dates, $this->values, $range);
-            if ($stats instanceof \App\Domain\Collection\Dashboard\PriceStats) {
+            if ($stats instanceof PriceStats && $stats->isComplete()) {
                 $changes[] = ['range' => $range, 'changePercentage' => $stats->getChangePercentage()];
             }
         }
@@ -93,7 +108,11 @@ final readonly class CardDetail
             'values' => array_slice($this->values, $start),
             'average' => array_slice(PriceStats::movingAverage($this->values, self::MOVING_AVERAGE_DAYS), $start),
             'days' => $this->range->getDays(),
-            'trend' => $stats instanceof \App\Domain\Collection\Dashboard\PriceStats && $stats->getChange() < 0 ? 'down' : 'up',
+            'trend' => match (true) {
+                !$stats instanceof PriceStats || !$stats->isComplete() => 'flat',
+                $stats->getChange() < 0 => 'down',
+                default => 'up',
+            },
         ];
     }
 }

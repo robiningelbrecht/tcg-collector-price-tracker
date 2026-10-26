@@ -17,7 +17,7 @@ function draw(canvas) {
         const x = i / (values.length - 1) * (w - 2) + 1, y = h - 3 - (v - min) / ((max - min) || 1) * (h - 6);
         started ? g.lineTo(x, y) : (g.moveTo(x, y), started = true);
     });
-    g.strokeStyle = css(canvas.dataset.trend === "up" ? "--color-up" : "--color-down");
+    g.strokeStyle = css({up: "--color-up", down: "--color-down"}[canvas.dataset.trend] ?? "--color-muted");
     g.lineWidth = 1.5;
     g.lineJoin = "round";
     g.stroke();

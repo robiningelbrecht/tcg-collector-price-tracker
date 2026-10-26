@@ -149,6 +149,11 @@ final readonly class OverviewCard
             ->sum(fn (OverviewVariant $variant): int => $variant->getCount());
     }
 
+    public function getUnpricedCount(): int
+    {
+        return $this->getCount() - $this->getPricedCount();
+    }
+
     public function isPriced(): bool
     {
         return $this->getPricedCount() > 0;

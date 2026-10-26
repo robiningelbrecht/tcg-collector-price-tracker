@@ -29,4 +29,21 @@ enum PriceRange: string
             self::TWO_YEARS => 729,
         };
     }
+
+    public function isCoveredBy(int $historyDays): bool
+    {
+        return $historyDays >= $this->getDays();
+    }
+
+    public static function longestCoveredBy(int $historyDays): self
+    {
+        $covered = array_filter(self::cases(), fn (self $range): bool => $range->isCoveredBy($historyDays));
+
+        return [] === $covered ? self::SEVEN_DAYS : end($covered);
+    }
+
+    public function orLongestCoveredBy(int $historyDays): self
+    {
+        return $this->isCoveredBy($historyDays) ? $this : self::longestCoveredBy($historyDays);
+    }
 }

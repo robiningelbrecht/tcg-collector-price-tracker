@@ -13,6 +13,7 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
     public function find(): OverviewCards
     {
         $pricesPerVariant = $this->findPricesPerVariant();
+        $pricedCards = $this->findPricedCards();
 
         $rows = $this->connection->executeQuery(
             'SELECT OwnedCard.language, OwnedCard.cardId, OwnedCard.localId, OwnedCard.name, OwnedCard.rarity, OwnedCard.image,
@@ -35,14 +36,23 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
             $first = $cardRows[0];
             $variants = OverviewVariants::empty();
             foreach ($cardRows as $row) {
+                $cardKey = $row['language'].'|'.$row['cardId'];
                 $priceVariantId = isset($row['priceVariantId']) ? (string) $row['priceVariantId'] : null;
+                $prices = null === $priceVariantId
+                    ? PricePoints::empty()
+                    : PricePoints::fromArray($pricesPerVariant[$cardKey.'|'.$priceVariantId] ?? []);
+
                 $variants->add(OverviewVariant::fromState(
                     variantName: (string) $row['variantName'],
                     count: (int) $row['count'],
                     priceVariantId: $priceVariantId,
-                    prices: null === $priceVariantId
-                        ? PricePoints::empty()
-                        : PricePoints::fromArray($pricesPerVariant[$row['language'].'|'.$row['cardId'].'|'.$priceVariantId] ?? []),
+                    prices: $prices,
+                    missingPriceReason: match (true) {
+                        !$prices->isEmpty() => null,
+                        null === $priceVariantId => MissingPriceReason::NO_PRICE_VARIANT,
+                        !isset($pricedCards[$cardKey]) => MissingPriceReason::CARD_NOT_PRICED,
+                        default => MissingPriceReason::VARIANT_NOT_PRICED,
+                    },
                 ));
             }
 
@@ -64,6 +74,24 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
         }
 
         return $cards;
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private function findPricedCards(): array
+    {
+        $rows = $this->connection->executeQuery(
+            'SELECT DISTINCT language, cardId FROM CardPrice WHERE source = :source AND trend IS NOT NULL',
+            ['source' => PriceSource::CARDMARKET->value]
+        )->fetchAllAssociative();
+
+        $pricedCards = [];
+        foreach ($rows as $row) {
+            $pricedCards[$row['language'].'|'.$row['cardId']] = true;
+        }
+
+        return $pricedCards;
     }
 
     /**

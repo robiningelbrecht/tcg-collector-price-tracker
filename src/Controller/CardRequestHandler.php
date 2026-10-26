@@ -38,7 +38,8 @@ final readonly class CardRequestHandler
             'detail' => CardDetail::build(
                 cards: $cards,
                 card: $card,
-                range: PriceRange::tryFrom($request->query->getString('range')) ?? PriceRange::ONE_YEAR,
+                range: PriceRange::tryFrom($request->query->getString('range'))
+                    ?? PriceRange::ONE_YEAR->orLongestCoveredBy($cards->getHistoryDays()),
             ),
             'ranges' => PriceRange::cases(),
         ]));

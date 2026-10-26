@@ -26,9 +26,11 @@ final readonly class DashboardRequestHandler
     #[Route(path: '/', name: 'dashboard', methods: ['GET'])]
     public function handle(Request $request): Response
     {
+        $overviewCards = $this->collectionOverviewQuery->find();
         $dashboard = CollectionDashboard::build(
-            overviewCards: $this->collectionOverviewQuery->find(),
-            range: PriceRange::tryFrom($request->query->getString('range')) ?? PriceRange::NINETY_DAYS,
+            overviewCards: $overviewCards,
+            range: PriceRange::tryFrom($request->query->getString('range'))
+                ?? PriceRange::NINETY_DAYS->orLongestCoveredBy($overviewCards->getHistoryDays()),
             moverMode: MoverMode::tryFrom($request->query->getString('mode')) ?? MoverMode::PERCENTAGE,
         );
 

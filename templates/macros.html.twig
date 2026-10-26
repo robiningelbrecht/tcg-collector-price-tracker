@@ -4,6 +4,12 @@
 
 {% macro pct(value) %}{{ value >= 0 ? '+' : '−' }}{{ (value|abs * 100)|number_format(1) }}%{% endmacro %}
 
+{% macro change(stats) %}{% if stats.complete %}<span class="{{ _self.trend(stats.changePercentage) }}">{{ _self.pct(stats.changePercentage) }}</span>{% else %}<span class="sub">—</span>{% endif %}{% endmacro %}
+
+{% macro days(count) %}{{ count }} day{{ count == 1 ? '' : 's' }}{% endmacro %}
+
+{% macro rangeTitle(covered, priceDayCount) %}{{ covered ? '' : 'Only ' ~ _self.days(priceDayCount) ~ ' of prices so far' }}{% endmacro %}
+
 {% macro trend(value) %}{{ value >= 0 ? 'up' : 'down' }}{% endmacro %}
 
 {% macro tags(card) %}{% if card.language.value == 'ja' %}<span class="tag">JP</span>{% endif %}{% if card.count > 1 %}<span class="tag">×{{ card.count }}</span>{% endif %}{% if card.fromNewSet %}<span class="tag">NEW</span>{% endif %}{% endmacro %}

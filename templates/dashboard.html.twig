@@ -16,13 +16,21 @@
             </div>
             <nav class="seg">
                 {% for option in ranges %}
-                    <a href="{{ path('dashboard', {range: option.value, mode: mode.value}) }}" class="{{ option == range ? 'on' }}">{{ option.label }}</a>
+                    {% set covered = dashboard.covers(option) %}
+                    <a href="{{ path('dashboard', {range: option.value, mode: mode.value}) }}" class="{{ option == range ? 'on' }} {{ covered ? '' : 'partial' }}" title="{{ m.rangeTitle(covered, dashboard.priceDayCount) }}">{{ option.label }}</a>
                 {% endfor %}
             </nav>
         </div>
 
+        {% if dashboard.firstDate and not dashboard.rangeComplete %}
+            <div class="mb-4 rounded-md border-l-4 border-brand bg-chip px-3 py-2 text-[12.5px] text-muted">
+                Price history started on {{ dashboard.firstDate|date('j M Y') }} ({{ m.days(dashboard.priceDayCount) }} of prices so far).
+                Changes over {{ range.label }} show up once the history covers {{ range.days }} days.
+            </div>
+        {% endif %}
+
         {% if cards is empty %}
-            <div class="panel"><div class="empty">No priced cards yet.</div></div>
+            <div class="panel mb-4"><div class="empty">No priced cards yet.</div></div>
         {% else %}
             {% set best = dashboard.bestPerformer %}
             {% set worst = dashboard.worstPerformer %}
@@ -34,23 +42,43 @@
                 </div>
                 <div class="panel">
                     <div class="kpi-l">Change · {{ range.label }}</div>
-                    <div class="kpi-v"><span class="{{ m.trend(dashboard.change) }}">{{ m.signedEur(dashboard.change) }}</span></div>
-                    <div class="kpi-s"><span class="{{ m.trend(dashboard.change) }}">{{ m.pct(dashboard.changePercentage) }}</span> like-for-like</div>
+                    {% if dashboard.change is not null %}
+                        <div class="kpi-v"><span class="{{ m.trend(dashboard.change) }}">{{ m.signedEur(dashboard.change) }}</span></div>
+                        <div class="kpi-s"><span class="{{ m.trend(dashboard.change) }}">{{ m.pct(dashboard.changePercentage) }}</span> like-for-like</div>
+                    {% else %}
+                        <div class="kpi-v"><span class="sub">—</span></div>
+                        <div class="kpi-s">Not enough history yet</div>
+                    {% endif %}
                 </div>
                 <div class="panel">
                     <div class="kpi-l">Up / down</div>
-                    <div class="kpi-v"><span class="up">{{ dashboard.risingCount }}</span> / <span class="down">{{ dashboard.fallingCount }}</span></div>
-                    <div class="kpi-s">{{ dashboard.flatCount }} flat</div>
+                    {% if dashboard.change is not null %}
+                        <div class="kpi-v"><span class="up">{{ dashboard.risingCount }}</span> / <span class="down">{{ dashboard.fallingCount }}</span></div>
+                        <div class="kpi-s">{{ dashboard.flatCount }} flat</div>
+                    {% else %}
+                        <div class="kpi-v"><span class="sub">—</span></div>
+                        <div class="kpi-s">Not enough history yet</div>
+                    {% endif %}
                 </div>
                 <div class="panel">
                     <div class="kpi-l">Best performer</div>
-                    <div class="kpi-v"><span class="{{ m.trend(best.stats.changePercentage) }}">{{ m.pct(best.stats.changePercentage) }}</span></div>
-                    <div class="kpi-s">{{ best.card.name }} · {{ best.card.setName }}</div>
+                    {% if best %}
+                        <div class="kpi-v">{{ m.change(best.stats) }}</div>
+                        <div class="kpi-s">{{ best.card.name }} · {{ best.card.setName }}</div>
+                    {% else %}
+                        <div class="kpi-v"><span class="sub">—</span></div>
+                        <div class="kpi-s">Not enough history yet</div>
+                    {% endif %}
                 </div>
                 <div class="panel">
                     <div class="kpi-l">Worst performer</div>
-                    <div class="kpi-v"><span class="{{ m.trend(worst.stats.changePercentage) }}">{{ m.pct(worst.stats.changePercentage) }}</span></div>
-                    <div class="kpi-s">{{ worst.card.name }} · {{ worst.card.setName }}</div>
+                    {% if worst %}
+                        <div class="kpi-v">{{ m.change(worst.stats) }}</div>
+                        <div class="kpi-s">{{ worst.card.name }} · {{ worst.card.setName }}</div>
+                    {% else %}
+                        <div class="kpi-v"><span class="sub">—</span></div>
+                        <div class="kpi-s">Not enough history yet</div>
+                    {% endif %}
                 </div>
                 <div class="panel">
                     <div class="kpi-l">Concentration</div>
@@ -96,7 +124,7 @@
                             {% endset %}
                             {{ m.item(mover, right) }}
                         {% else %}
-                            <div class="empty">Nothing went {{ direction }} in this range.</div>
+                            <div class="empty">{{ dashboard.rangeComplete ? 'Nothing went ' ~ direction ~ ' in this range.' : 'Not enough history yet for ' ~ range.label ~ '.' }}</div>
                         {% endfor %}
                     </div>
                 {% endfor %}
@@ -108,11 +136,14 @@
                     {% for card in dashboard.mostVolatile %}
                         {% set right %}{{ (card.stats.volatility * 100)|round }}%<small>annualised · {{ range.label }}</small>{% endset %}
                         {{ m.item(card, right) }}
+                    {% else %}
+                        <div class="empty">Not enough history yet for {{ range.label }}.</div>
                     {% endfor %}
                 </div>
+                {% set twoYearSince = dashboard.twoYearHighSince ? ' · since ' ~ dashboard.twoYearHighSince|date('j M Y') : '' %}
                 <div class="panel">
-                    <h2 class="panel-title mb-3">At or near 2-year high</h2>
-                    {% for card in dashboard.nearTwoYearHigh %}
+                    <h2 class="panel-title mb-3">At or near 2-year high<span class="sub font-normal">{{ twoYearSince }}</span></h2>
+                    {% for card in dashboard.historyDays > 0 ? dashboard.nearTwoYearHigh : [] %}
                         {% set stats = card.twoYearStats %}
                         {% set right %}
                             {% if stats.atHigh %}
@@ -122,14 +153,18 @@
                             {% endif %}
                         {% endset %}
                         {{ m.item(card, right) }}
+                    {% else %}
+                        <div class="empty">Not enough history yet.</div>
                     {% endfor %}
                 </div>
                 <div class="panel">
-                    <h2 class="panel-title mb-3">Furthest below 2-year high</h2>
+                    <h2 class="panel-title mb-3">Furthest below 2-year high<span class="sub font-normal">{{ twoYearSince }}</span></h2>
                     {% for card in dashboard.furthestBelowTwoYearHigh %}
                         {% set stats = card.twoYearStats %}
                         {% set right %}<span class="down">{{ m.pct(stats.fromHigh) }}</span><small>high {{ m.eur(stats.high) }} · {{ stats.highOn|date('j M Y') }}</small>{% endset %}
                         {{ m.item(card, right) }}
+                    {% else %}
+                        <div class="empty">{{ dashboard.historyDays > 0 ? 'No card is below its high.' : 'Not enough history yet.' }}</div>
                     {% endfor %}
                 </div>
             </section>
@@ -180,7 +215,7 @@
                             {% for row in cards %}
                                 {% set card = row.card %}
                                 {% set stats = row.stats %}
-                                {% set d7 = row.sevenDayStats.changePercentage %}
+                                {% set sevenDays = row.sevenDayStats %}
                                 <tr data-card-url="{{ m.cardUrl(card) }}"
                                     data-search="{{ (card.name ~ ' ' ~ card.setName ~ ' ' ~ card.rarity)|lower }}"
                                     data-filter-serie="{{ card.serieId ?? 'unknown' }}"
@@ -190,24 +225,43 @@
                                     data-sort-rarity="{{ card.rarity }}"
                                     data-sort-qty="{{ card.count }}"
                                     data-sort-value="{{ row.value }}"
-                                    data-sort-d7="{{ d7 }}"
-                                    data-sort-change="{{ stats.changePercentage }}"
-                                    data-sort-volatility="{{ stats.volatility }}">
+                                    data-sort-d7="{{ sevenDays.complete ? sevenDays.changePercentage }}"
+                                    data-sort-change="{{ stats.complete ? stats.changePercentage }}"
+                                    data-sort-volatility="{{ stats.complete ? stats.volatility }}">
                                     <td class="num">{{ row.rank }}</td>
-                                    <td><div class="cn">{{ m.thumb(card) }}<div><b>{{ card.name }}{{ m.tags(card) }}</b><span>{{ card.setName }} · {{ card.number }}</span></div></div></td>
+                                    <td><div class="cn">{{ m.thumb(card) }}<div><b>{{ card.name }}{{ m.tags(card) }}{% if card.unpricedCount > 0 %}<span class="tag tag-muted">{{ card.unpricedCount }} unpriced</span>{% endif %}</b><span>{{ card.setName }} · {{ card.number }}</span></div></div></td>
                                     <td><span class="sub">{{ card.rarity }}</span></td>
                                     <td class="num">{{ card.count }}</td>
                                     <td class="num"><b>{{ m.eur(row.value) }}</b>{% if card.pricedCount > 1 %}<span class="sub block">{{ m.eur(row.value / card.pricedCount) }} avg</span>{% endif %}</td>
-                                    <td class="num {{ m.trend(d7) }}">{{ m.pct(d7) }}</td>
-                                    <td class="num {{ m.trend(stats.changePercentage) }}">{{ m.pct(stats.changePercentage) }}</td>
-                                    <td class="num">{{ (stats.volatility * 100)|round }}%</td>
-                                    <td><canvas class="sp" data-sparkline="{{ row.sparkline|json_encode }}" data-trend="{{ m.trend(stats.changePercentage) }}"></canvas></td>
+                                    <td class="num">{{ m.change(sevenDays) }}</td>
+                                    <td class="num">{{ m.change(stats) }}</td>
+                                    <td class="num">{% if stats.complete %}{{ (stats.volatility * 100)|round }}%{% else %}<span class="sub">—</span>{% endif %}</td>
+                                    <td><canvas class="sp" data-sparkline="{{ row.sparkline|json_encode }}" data-trend="{{ stats.complete ? m.trend(stats.changePercentage) : 'flat' }}"></canvas></td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             </section>
+        {% endif %}
+
+        {% set unpricedCards = dashboard.unpricedCards %}
+        {% if unpricedCards is not empty %}
+            <details class="panel mt-4">
+                <summary class="panel-title cursor-pointer select-none">Cards without a price ({{ unpricedCards|length }})</summary>
+                <p class="sub mb-2 mt-1">These cards are left out of every total.</p>
+                {% for card in unpricedCards %}
+                    <div class="it" data-card-url="{{ m.cardUrl(card) }}">
+                        {{ m.thumb(card) }}
+                        <div class="n"><b>{{ card.name }}{{ m.tags(card) }}</b><span>{{ card.setName }} · {{ card.number }}</span></div>
+                        <div class="r">
+                            {% for variant in card.variants %}
+                                <small>{{ variant.variantName }} ×{{ variant.count }} · {{ variant.missingPriceReason ? variant.missingPriceReason.label : 'Priced' }}</small>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </details>
         {% endif %}
     </main>
 

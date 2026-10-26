@@ -28,7 +28,7 @@ const builders = {
         return {type: "line", data: {labels: data.labels, datasets: [{data: data.values, borderColor: accent, backgroundColor: gradient, fill: true, pointRadius: data.values.length > 1 ? 0 : 3, borderWidth: 2, tension: .2}]}, options: lineOptions(data.days)};
     },
     card(canvas, data) {
-        const color = css(data.trend === "up" ? "--color-up" : "--color-down");
+        const color = css({up: "--color-up", down: "--color-down"}[data.trend] ?? "--color-muted");
         return {type: "line", data: {labels: data.labels, datasets: [
             {label: "Value", data: data.values, borderColor: color, backgroundColor: color + "22", fill: true, pointRadius: data.values.length > 1 ? 0 : 3, borderWidth: 2, tension: .15, spanGaps: false},
             {label: "30D avg", data: data.average, borderColor: css("--color-muted"), borderDash: [5, 4], pointRadius: 0, borderWidth: 1.3, fill: false}
@@ -42,9 +42,9 @@ const builders = {
     },
     sets(canvas, data) {
         const up = css("--color-up"), down = css("--color-down");
-        return {type: "bar", data: {labels: data.labels, datasets: [{data: data.values, backgroundColor: data.changes.map(c => (c >= 0 ? up : down) + "cc"), borderRadius: 4}]},
+        return {type: "bar", data: {labels: data.labels, datasets: [{data: data.values, backgroundColor: data.changes.map(c => (c == null ? css("--color-muted") : c >= 0 ? up : down) + "cc"), borderRadius: 4}]},
             options: {...lineOptions(0), indexAxis: "y", interaction: {mode: "nearest", intersect: true},
-                plugins: {legend: {display: false}, tooltip: {callbacks: {label: ctx => { const i = ctx.dataIndex, n = data.counts[i]; return [`${fmtEur(data.values[i])} · ${n} card${n > 1 ? "s" : ""}`, `${data.range}: ${fmtPct(data.changes[i])}`]; }}}},
+                plugins: {legend: {display: false}, tooltip: {callbacks: {label: ctx => { const i = ctx.dataIndex, n = data.counts[i]; return [`${fmtEur(data.values[i])} · ${n} card${n > 1 ? "s" : ""}`, `${data.range}: ${data.changes[i] == null ? "—" : fmtPct(data.changes[i])}`]; }}}},
                 scales: {x: {ticks: {color: css("--color-muted"), callback: v => fmtEur(v)}, grid: {color: css("--color-line")}}, y: {ticks: {color: css("--color-ink"), font: {size: 11.5}}, grid: {display: false}}}}};
     },
 };

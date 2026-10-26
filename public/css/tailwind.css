@@ -42,7 +42,8 @@
 
   .seg { @apply inline-flex gap-0.5 rounded-md bg-chip p-[3px]; }
   .seg > * { @apply cursor-pointer rounded px-2.5 py-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink; }
-  .seg > .on { @apply bg-brand text-white shadow-sm hover:bg-brand-hover hover:text-white; }
+  .seg > .partial { @apply opacity-50; }
+  .seg > .on { @apply opacity-100 bg-brand text-white shadow-sm hover:bg-brand-hover hover:text-white; }
   .seg.sm > * { @apply px-2 py-0.5 text-xs; }
 
   .kpi-l { @apply text-[11.5px] font-semibold uppercase tracking-wider text-muted; }
@@ -58,6 +59,7 @@
 
   .thumb { @apply h-11 w-8 flex-none rounded-sm bg-chip object-cover; }
   .tag { @apply ml-1 inline-block rounded bg-brand-soft px-1.5 align-[1px] text-[10.5px] font-bold text-brand; }
+  .tag-muted { @apply bg-chip text-muted; }
   .chip { @apply rounded-full bg-chip px-2.5 py-0.5 text-[12.5px] tabular-nums; }
   .stat { @apply rounded-md bg-chip px-2.5 py-2; }
   .stat .l { @apply text-[11px] font-semibold uppercase tracking-wide text-muted; }

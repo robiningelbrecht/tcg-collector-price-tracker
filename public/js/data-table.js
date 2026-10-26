@@ -25,7 +25,9 @@ function initDataTable(wrapper) {
         const isString = header.dataset.sortType === "string";
         rows.sort((a, b) => {
             const x = a.dataset[key], y = b.dataset[key];
-            return (isString ? x.localeCompare(y) : x - y) * (ascending ? 1 : -1);
+            if (isString) return x.localeCompare(y) * (ascending ? 1 : -1);
+            if (x === "" || y === "") return (x === "") - (y === "");
+            return (x - y) * (ascending ? 1 : -1);
         });
         tbody.append(...rows);
         headers.forEach(h => h === header ? h.setAttribute("aria-sort", ascending ? "ascending" : "descending") : h.removeAttribute("aria-sort"));

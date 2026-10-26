@@ -11,6 +11,7 @@ final readonly class OverviewVariant
         private int $count,
         private ?string $priceVariantId,
         private PricePoints $prices,
+        private ?MissingPriceReason $missingPriceReason,
     ) {
     }
 
@@ -19,12 +20,14 @@ final readonly class OverviewVariant
         int $count,
         ?string $priceVariantId,
         PricePoints $prices,
+        ?MissingPriceReason $missingPriceReason,
     ): self {
         return new self(
             variantName: $variantName,
             count: $count,
             priceVariantId: $priceVariantId,
             prices: $prices,
+            missingPriceReason: $missingPriceReason,
         );
     }
 
@@ -51,6 +54,11 @@ final readonly class OverviewVariant
     public function isPriced(): bool
     {
         return !$this->prices->isEmpty();
+    }
+
+    public function getMissingPriceReason(): ?MissingPriceReason
+    {
+        return $this->missingPriceReason;
     }
 
     public function getLatestPrice(): ?PricePoint

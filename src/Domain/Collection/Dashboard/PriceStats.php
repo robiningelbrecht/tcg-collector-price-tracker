@@ -7,6 +7,8 @@ namespace App\Domain\Collection\Dashboard;
 final readonly class PriceStats
 {
     private function __construct(
+        private bool $complete,
+        private \DateTimeImmutable $firstOn,
         private float $first,
         private float $last,
         private float $high,
@@ -61,6 +63,8 @@ final readonly class PriceStats
         }
 
         return new self(
+            complete: $range->isCoveredBy(count($values) - 1) && null !== $values[$start],
+            firstOn: new \DateTimeImmutable($dates[array_key_first($window)]),
             first: $first,
             last: $last,
             high: $high,
@@ -107,6 +111,16 @@ final readonly class PriceStats
         $squaredDifferences = array_map(fn (float $value): float => ($value - $mean) ** 2, $values);
 
         return sqrt(array_sum($squaredDifferences) / ($count - 1));
+    }
+
+    public function isComplete(): bool
+    {
+        return $this->complete;
+    }
+
+    public function getFirstOn(): \DateTimeImmutable
+    {
+        return $this->firstOn;
     }
 
     public function getFirst(): float

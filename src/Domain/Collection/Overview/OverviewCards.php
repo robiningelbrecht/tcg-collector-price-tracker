@@ -38,6 +38,11 @@ final class OverviewCards extends Collection
         return $ranks;
     }
 
+    public function getHistoryDays(): int
+    {
+        return max(0, count($this->getPriceDates()) - 1);
+    }
+
     /**
      * @return list<string>
      */
