@@ -15,16 +15,21 @@
             <a href="{{ path('dashboard') }}" class="btn btn-muted">Back to dashboard</a>
         </div>
 
-        <form method="get" action="{{ path('register_owned_card') }}" class="panel mb-4 flex flex-wrap items-center gap-2">
-            <label for="set" class="kpi-l">Set</label>
-            <select id="set" name="set" class="field min-w-0 flex-1" onchange="this.form.submit()" required>
-                <option value="">Choose a set…</option>
-                {% for cardSet in cardSets %}
-                    <option value="{{ cardSet.cardSetId }}" {{ selectedSet is defined and selectedSet and selectedSet.cardSetId == cardSet.cardSetId ? 'selected' }}>{{ cardSet.name }} ({{ cardSet.cardSetId }})</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn">Show cards</button>
-        </form>
+        <div class="panel mb-4 flex flex-wrap items-center gap-2" data-set-search>
+            <label for="set-search" class="kpi-l">Set</label>
+            <div class="relative min-w-0 flex-1">
+                <input id="set-search" type="search" autocomplete="off" placeholder="Search by set name or id" value="{{ selectedSet is defined and selectedSet ? selectedSet.name }}" class="field w-full" data-set-search-input>
+                <div class="absolute inset-x-0 top-full z-30 mt-1 hidden max-h-72 overflow-auto rounded-md border border-line bg-panel p-1 shadow-lg" data-set-search-results>
+                    {% for cardSet in cardSets %}
+                        <a href="{{ path('register_owned_card', {set: cardSet.cardSetId}) }}" class="flex items-center justify-between gap-3 rounded px-2 py-1.5 outline-none hover:bg-chip focus:bg-chip" data-set-search-item data-search="{{ (cardSet.name ~ ' ' ~ cardSet.cardSetId)|lower }}">
+                            <span class="truncate font-semibold">{{ cardSet.name }}</span>
+                            <span class="text-xs text-muted">{{ cardSet.cardSetId }}</span>
+                        </a>
+                    {% endfor %}
+                    <div class="empty hidden px-2" data-set-search-empty>No sets found.</div>
+                </div>
+            </div>
+        </div>
 
         {% if cards is defined %}
             <section class="panel">
