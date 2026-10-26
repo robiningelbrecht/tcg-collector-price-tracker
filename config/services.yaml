@@ -1,3 +1,6 @@
+parameters:
+    env(DATABASE_DIRECTORY): '%kernel.project_dir%/storage/database'
+
 services:
     _defaults:
         autowire: true
@@ -7,3 +10,6 @@ services:
         resource: '../src/'
         exclude:
             - '../src/Kernel.php'
+
+    Linkin\Component\DoctrineNamingStrategy\ORM\Mapping\CamelCaseNamingStrategy:
+        class: Linkin\Component\DoctrineNamingStrategy\ORM\Mapping\CamelCaseNamingStrategy

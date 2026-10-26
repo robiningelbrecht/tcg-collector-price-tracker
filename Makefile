@@ -21,6 +21,13 @@ console:
 composer:
 	@make dcr cmd="composer $(arg)"
 
+# Database migration helpers.
+migrate-diff:
+	@make console arg="doctrine:migrations:diff"
+
+migrate:
+	@make console arg="doctrine:migrations:migrate --no-interaction --allow-no-migration"
+
 # Code quality tools.
 phpstan:
 	@make dcr cmd="vendor/bin/phpstan --memory-limit=1G $(arg)"

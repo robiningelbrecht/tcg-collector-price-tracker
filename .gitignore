@@ -22,3 +22,6 @@ phpstan.neon
 
 /storage/*
 !/storage/.gitkeep
+!/storage/database/
+/storage/database/*
+!/storage/database/.gitkeep
