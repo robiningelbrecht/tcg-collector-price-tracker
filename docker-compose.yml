@@ -1,0 +1,23 @@
+services:
+    php-cli:
+        build:
+            context: ./
+            dockerfile: docker/php-cli/Dockerfile
+        container_name: 'tcg-collector-price-tracker-php-cli'
+        volumes:
+            - './:/var/www/'
+        working_dir: /var/www
+        env_file:
+            - path: ./.env
+              required: true
+            - path: ./.env.local
+              required: false
+        environment:
+            - PHP_IDE_CONFIG=phpstorm
+            - TZ=Europe/Brussels
+        profiles: [on-demand]
+        networks:
+            - tcg-collector-price-tracker-network
+
+networks:
+    tcg-collector-price-tracker-network: {}
