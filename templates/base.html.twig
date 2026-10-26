@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noindex,nofollow">
         <meta name="theme-color" content="#1B1D1E">
+        <meta name="csrf-token" content="{{ csrf_token('dispatch-command') }}">
+        <meta name="dispatch-command-url" content="{{ path('dispatch_command') }}">
         <title>{% block title %}TCG Price Tracker{% endblock %}</title>
         <link href="{{ asset('favicon.svg') }}" type="image/svg+xml" rel="icon">
         <link href="{{ asset('css/dist/tailwind.min.css') }}" rel="stylesheet">
