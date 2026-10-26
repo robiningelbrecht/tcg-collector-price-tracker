@@ -31,6 +31,14 @@ migrate-diff:
 migrate:
 	@make console arg="doctrine:migrations:migrate --no-interaction --allow-no-migration"
 
+# Asset helpers.
+npm-install:
+	@make dcr cmd="npm ci"
+
+app-build-assets:
+	@make dcr cmd="node_modules/.bin/tailwindcss -i public/css/tailwind.css -o public/css/dist/tailwind.min.css --minify"
+	@make dcr cmd="node_modules/.bin/webpack --config webpack.config.js"
+
 # Code quality tools.
 phpstan:
 	@make dcr cmd="vendor/bin/phpstan --memory-limit=1G $(arg)"

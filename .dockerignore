@@ -16,3 +16,9 @@ docker-compose.yml
 Makefile
 phpstan.dist.neon
 rector.php
+node_modules
+package.json
+package-lock.json
+webpack.config.js
+public/css/tailwind.css
+public/js/*.js

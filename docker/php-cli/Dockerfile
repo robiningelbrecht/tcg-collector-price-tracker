@@ -19,4 +19,7 @@ RUN docker-php-ext-enable xdebug
 COPY docker/php-cli/xdebug.ini "${PHP_INI_DIR}/conf.d"
 RUN rm pie.phar
 
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash
+RUN apt-get install -y nodejs
+
 COPY --from=composer:latest /usr/bin/composer /usr/local/bin/composer

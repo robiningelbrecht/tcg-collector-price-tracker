@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.11",
+    "chart.js": "^4.4.1",
+    "tailwindcss": "^4.1.11",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1"
+  }
+}

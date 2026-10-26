@@ -4,11 +4,14 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="robots" content="noindex,nofollow">
-        <title>{% block title %}TCG price tracker{% endblock %}</title>
+        <meta name="theme-color" content="#1B1D1E">
+        <title>{% block title %}TCG Price Tracker{% endblock %}</title>
+        <link href="{{ asset('css/dist/tailwind.min.css') }}" rel="stylesheet">
         {% block stylesheets %}{% endblock %}
-        {% block javascripts %}{% endblock %}
     </head>
-    <body>
+    <body class="bg-page font-sans text-sm leading-[1.45] text-ink antialiased">
         {% block body %}{% endblock %}
+        <script src="{{ asset('js/dist/app.min.js') }}" type="module"></script>
+        {% block javascripts %}{% endblock %}
     </body>
 </html>
