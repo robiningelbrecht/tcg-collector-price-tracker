@@ -9,7 +9,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'CardSet')]
-#[ORM\Index(name: 'CardSet_name', columns: ['name'])]
 final readonly class CardSet
 {
     /**
