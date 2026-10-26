@@ -1,0 +1,1 @@
+0 6 * * * php /var/www/bin/console app:prices:refresh --no-interaction > /proc/1/fd/1 2>&1

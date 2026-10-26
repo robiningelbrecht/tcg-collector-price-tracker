@@ -30,6 +30,7 @@ RUN set -eux; \
 
 COPY docker/web/config/php.ini ${PHP_INI_DIR}/php.ini
 COPY docker/web/config/Caddyfile /etc/frankenphp/Caddyfile
+COPY docker/web/config/crontab /etc/crontabs/root
 COPY docker/web/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
