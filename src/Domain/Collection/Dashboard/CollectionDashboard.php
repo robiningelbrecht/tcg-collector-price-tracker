@@ -232,6 +232,14 @@ final readonly class CollectionDashboard
     /**
      * @return list<array{id: string, label: string}>
      */
+    public function getAllSeries(): array
+    {
+        return $this->series;
+    }
+
+    /**
+     * @return list<array{id: string, label: string}>
+     */
     public function getSeries(): array
     {
         return array_values(array_filter(
