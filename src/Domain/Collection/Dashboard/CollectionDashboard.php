@@ -238,6 +238,35 @@ final readonly class CollectionDashboard
     }
 
     /**
+     * @return list<array{id: string, label: string, sets: list<array{id: string, label: string}>}>
+     */
+    public function getSetsBySerie(): array
+    {
+        $sets = [];
+        foreach ($this->overviewCards as $card) {
+            $sets[$card->getSerieId() ?? 'unknown'][$card->getLanguage()->value.'/'.$card->getCardSetId()] = [
+                'label' => $card->getSetName(),
+                'release' => $card->getSetReleaseDate() ?? '9999-12-31',
+            ];
+        }
+
+        return array_map(function (array $serie) use ($sets): array {
+            $serieSets = $sets[$serie['id']];
+            uasort($serieSets, fn (array $a, array $b): int => [$a['release'], $a['label']] <=> [$b['release'], $b['label']]);
+
+            return [
+                'id' => $serie['id'],
+                'label' => $serie['label'],
+                'sets' => array_map(
+                    fn (string $id, array $set): array => ['id' => $id, 'label' => $set['label']],
+                    array_keys($serieSets),
+                    array_values($serieSets),
+                ),
+            ];
+        }, $this->series);
+    }
+
+    /**
      * @return list<array{id: string, label: string}>
      */
     public function getSeries(): array

@@ -29,6 +29,16 @@
                             <option value="{{ serie.id }}">{{ serie.label }}</option>
                         {% endfor %}
                     </select>
+                    <select class="field" data-table-filter="set">
+                        <option value="">All sets</option>
+                        {% for serie in dashboard.setsBySerie %}
+                            <optgroup label="{{ serie.label }}">
+                                {% for set in serie.sets %}
+                                    <option value="{{ set.id }}">{{ set.label }}</option>
+                                {% endfor %}
+                            </optgroup>
+                        {% endfor %}
+                    </select>
                     <select class="field" data-table-filter="price">
                         <option value="">Priced and unpriced</option>
                         <option value="priced">Priced</option>
@@ -56,6 +66,7 @@
                                 <tr data-card-url="{{ m.cardUrl(card) }}"
                                     data-search="{{ (card.name ~ ' ' ~ card.setName ~ ' ' ~ card.rarity)|lower }}"
                                     data-filter-serie="{{ card.serieId ?? 'unknown' }}"
+                                    data-filter-set="{{ card.language.value ~ '/' ~ card.cardSetId }}"
                                     data-filter-price="priced"
                                     data-sort-rank="{{ row.rank }}"
                                     data-sort-name="{{ card.name }}"
@@ -80,6 +91,7 @@
                                 <tr data-card-url="{{ m.cardUrl(card) }}"
                                     data-search="{{ (card.name ~ ' ' ~ card.setName ~ ' ' ~ card.rarity)|lower }}"
                                     data-filter-serie="{{ card.serieId ?? 'unknown' }}"
+                                    data-filter-set="{{ card.language.value ~ '/' ~ card.cardSetId }}"
                                     data-filter-price="unpriced"
                                     data-sort-rank=""
                                     data-sort-name="{{ card.name }}"
