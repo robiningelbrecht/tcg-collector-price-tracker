@@ -11,7 +11,6 @@
         </div>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-        <a href="{{ path('register_owned_card') }}" class="btn">Add card</a>
         <nav class="seg">
             {% for option in ranges %}
                 {% set covered = dashboard.covers(option) %}

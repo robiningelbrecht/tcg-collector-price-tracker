@@ -23,8 +23,9 @@
                 <nav class="flex items-center gap-1">
                     {% set route = app.request.attributes.get('_route') %}
                     {% for name, label in {dashboard: 'Dashboard', collection: 'Collection'} %}
-                        <a href="{{ path(name, app.request.query.has('range') ? {range: app.request.query.get('range')} : {}) }}" class="rounded-md px-3 py-2 text-[13px] font-semibold {{ route == name ? 'bg-dark-700 text-dark-100' : 'text-dark-300 hover:text-white' }}" {{ route == name ? 'aria-current="page"' }}>{{ label }}</a>
+                        <a href="{{ path(name, app.request.query.has('range') ? {range: app.request.query.get('range')} : {}) }}" class="rounded-md px-2 py-2 text-[13px] font-semibold sm:px-3 {{ route == name ? 'bg-dark-700 text-dark-100' : 'text-dark-300 hover:text-white' }}" {{ route == name ? 'aria-current="page"' }}>{{ label }}</a>
                     {% endfor %}
+                    <a href="{{ path('register_owned_card') }}" class="btn ml-2" aria-label="Add card">+<span class="ml-1 hidden sm:inline">Add card</span></a>
                 </nav>
             </div>
         </header>
