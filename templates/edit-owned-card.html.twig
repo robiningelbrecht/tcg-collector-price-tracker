@@ -11,7 +11,7 @@
                 <h1 class="m-0 text-2xl font-bold">Edit card</h1>
                 <div class="sub">Change the variant or count, or remove it from your collection.</div>
             </div>
-            <a href="{{ path('dashboard') }}" class="btn btn-muted">Back to dashboard</a>
+            <a href="{{ path('collection') }}" class="btn btn-muted">Back to collection</a>
         </div>
 
         <section class="panel grid gap-5 md:grid-cols-[220px_minmax(0,1fr)]">
@@ -22,7 +22,7 @@
                 <h2 class="m-0 text-xl font-bold">{{ ownedCard.name }}</h2>
                 <div class="sub">{{ [cardSet ? cardSet.name : ownedCard.cardSetId, '#' ~ ownedCard.localId, ownedCard.rarity]|filter(v => v)|join(' · ') }}</div>
 
-                <form data-dispatch-command="update-owned-card" data-redirect="{{ path('dashboard') }}" class="mt-4">
+                <form data-dispatch-command="update-owned-card" data-redirect="{{ path('collection') }}" class="mt-4">
                     <input type="hidden" name="cardId" value="{{ ownedCard.cardId }}">
                     <input type="hidden" name="variantId" value="{{ ownedCard.priceVariantId }}">
                     <div data-form-error class="mb-3 hidden rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>

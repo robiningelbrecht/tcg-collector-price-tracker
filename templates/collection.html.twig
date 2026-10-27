@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+{% import 'macros.html.twig' as m %}
+
+{% set range = dashboard.range %}
+{% set cards = dashboard.cards %}
+
+{% block title %}Collection · TCG Price Tracker{% endblock %}
+
+{% block body %}
+    <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
+        {{ include('_page-header.html.twig', {title: 'Collection'}) }}
+
+        {% if cards is empty %}
+            <div class="panel mb-4"><div class="empty">No priced cards yet.</div></div>
+        {% else %}
+            <section class="panel" data-table>
+                <div class="mb-2 flex items-center justify-between gap-2">
+                    <h2 class="panel-title">All cards</h2>
+                    <span class="sub" data-table-count>{{ cards|length }} of {{ cards|length }}</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <input type="search" placeholder="Search card or set…" class="field min-w-0 flex-1 sm:max-w-xs" data-table-search>
+                    <select class="field" data-table-filter="serie">
+                        <option value="">All series</option>
+                        {% for serie in dashboard.series %}
+                            <option value="{{ serie.id }}">{{ serie.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mt-3 overflow-x-auto">
+                    <table class="w-full border-collapse tabular-nums">
+                        <thead><tr>
+                            <th class="num" data-sort="rank" aria-sort="ascending">#</th>
+                            <th data-sort="name" data-sort-type="string">Card</th>
+                            <th data-sort="rarity" data-sort-type="string">Rarity</th>
+                            <th class="num" data-sort="qty">Qty</th>
+                            <th class="num" data-sort="value">Value</th>
+                            <th class="num" data-sort="d7">7D</th>
+                            <th class="num" data-sort="change">{{ range.label }}</th>
+                            <th class="num" data-sort="volatility">Volatility</th>
+                            <th>Trend</th>
+                        </tr></thead>
+                        <tbody>
+                            {% for row in cards %}
+                                {% set card = row.card %}
+                                {% set stats = row.stats %}
+                                {% set sevenDays = row.sevenDayStats %}
+                                <tr data-card-url="{{ m.cardUrl(card) }}"
+                                    data-search="{{ (card.name ~ ' ' ~ card.setName ~ ' ' ~ card.rarity)|lower }}"
+                                    data-filter-serie="{{ card.serieId ?? 'unknown' }}"
+                                    data-sort-rank="{{ row.rank }}"
+                                    data-sort-name="{{ card.name }}"
+                                    data-sort-rarity="{{ card.rarity }}"
+                                    data-sort-qty="{{ card.count }}"
+                                    data-sort-value="{{ row.value }}"
+                                    data-sort-d7="{{ sevenDays.complete ? sevenDays.changePercentage }}"
+                                    data-sort-change="{{ stats.complete ? stats.changePercentage }}"
+                                    data-sort-volatility="{{ stats.complete ? stats.volatility }}">
+                                    <td class="num">{{ row.rank }}</td>
+                                    <td><div class="cn">{{ m.thumb(card) }}<div><b>{{ card.name }}{{ m.tags(card) }}{% if card.unpricedCount > 0 %}<span class="tag tag-muted">{{ card.unpricedCount }} unpriced</span>{% endif %}</b><span>{{ card.setName }} · {{ card.number }}</span></div></div></td>
+                                    <td><span class="sub">{{ card.rarity }}</span></td>
+                                    <td class="num">{{ card.count }}</td>
+                                    <td class="num"><b>{{ m.eur(row.value) }}</b>{% if card.pricedCount > 1 %}<span class="sub block">{{ m.eur(row.value / card.pricedCount) }} avg</span>{% endif %}</td>
+                                    <td class="num">{{ m.change(sevenDays) }}</td>
+                                    <td class="num">{{ m.change(stats) }}</td>
+                                    <td class="num">{% if stats.complete %}{{ (stats.volatility * 100)|round }}%{% else %}<span class="sub">—</span>{% endif %}</td>
+                                    <td><canvas class="sp" data-sparkline="{{ row.sparkline|json_encode }}" data-trend="{{ stats.complete ? m.trend(stats.changePercentage) : 'flat' }}"></canvas></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endif %}
+
+        {% set unpricedCards = dashboard.unpricedCards %}
+        {% if unpricedCards is not empty %}
+            <details class="panel mt-4">
+                <summary class="panel-title cursor-pointer select-none">Cards without a price ({{ unpricedCards|length }})</summary>
+                <p class="sub mb-2 mt-1">These cards are left out of every total.</p>
+                {% for card in unpricedCards %}
+                    <div class="it" data-card-url="{{ m.cardUrl(card) }}">
+                        {{ m.thumb(card) }}
+                        <div class="n"><b>{{ card.name }}{{ m.tags(card) }}</b><span>{{ card.setName }} · {{ card.number }}</span></div>
+                        <div class="r">
+                            {% for variant in card.variants %}
+                                <small>{{ variant.label }} ×{{ variant.count }} · {{ variant.missingPriceReason ? variant.missingPriceReason.label : 'Priced' }}</small>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </details>
+        {% endif %}
+    </main>
+{% endblock %}

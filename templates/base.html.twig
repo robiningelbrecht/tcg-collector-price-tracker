@@ -20,6 +20,12 @@
                     <span class="hidden h-5 w-px bg-dark-600 sm:block"></span>
                     <span class="hidden text-[13px] font-semibold text-dark-300 sm:block">Price tracker</span>
                 </a>
+                <nav class="flex items-center gap-1">
+                    {% set route = app.request.attributes.get('_route') %}
+                    {% for name, label in {dashboard: 'Dashboard', collection: 'Collection'} %}
+                        <a href="{{ path(name, app.request.query.has('range') ? {range: app.request.query.get('range')} : {}) }}" class="rounded-md px-3 py-2 text-[13px] font-semibold {{ route == name ? 'bg-dark-700 text-dark-100' : 'text-dark-300 hover:text-white' }}" {{ route == name ? 'aria-current="page"' }}>{{ label }}</a>
+                    {% endfor %}
+                </nav>
             </div>
         </header>
         {% block body %}{% endblock %}
