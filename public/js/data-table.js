@@ -6,6 +6,7 @@ function initDataTable(wrapper) {
     const search = wrapper.querySelector("[data-table-search]");
     const filters = [...wrapper.querySelectorAll("[data-table-filter]")];
     const count = wrapper.querySelector("[data-table-count]");
+    const clear = wrapper.querySelector("[data-table-clear]");
     const headers = [...wrapper.querySelectorAll("th[data-sort]")];
 
     function applyFilters() {
@@ -18,6 +19,7 @@ function initDataTable(wrapper) {
             if (show) visible++;
         });
         count.textContent = `${visible} of ${rows.length}`;
+        if (clear) clear.hidden = !query && filters.every(filter => !filter.value);
     }
 
     function sortOn(header, ascending) {
@@ -40,6 +42,11 @@ function initDataTable(wrapper) {
     }));
     search.addEventListener("input", applyFilters);
     filters.forEach(filter => filter.addEventListener("input", applyFilters));
+    clear?.addEventListener("click", () => {
+        search.value = "";
+        filters.forEach(filter => filter.value = "");
+        applyFilters();
+    });
 }
 
 export function initDataTables(root) {
