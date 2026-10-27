@@ -7,7 +7,7 @@ dcr:
 	@make dc cmd="run --rm php-cli $(cmd)"
 
 up:
-	@make dc cmd="up -d"
+	@make dc cmd="up -d --build"
 
 stop:
 	@make dc cmd="stop"
