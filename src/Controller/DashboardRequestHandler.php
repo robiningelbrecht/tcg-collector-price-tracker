@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Domain\Collection\Dashboard\CollectionDashboard;
+use App\Domain\Collection\Dashboard\InsightView;
 use App\Domain\Collection\Dashboard\MoverMode;
 use App\Domain\Collection\Dashboard\PriceRange;
 use App\Domain\Collection\Overview\CollectionOverviewQuery;
@@ -38,6 +39,8 @@ final readonly class DashboardRequestHandler
             'dashboard' => $dashboard,
             'ranges' => PriceRange::cases(),
             'moverModes' => MoverMode::cases(),
+            'insightView' => InsightView::tryFrom($request->query->getString('insight')) ?? InsightView::MOST_VOLATILE,
+            'insightViews' => InsightView::cases(),
         ]));
     }
 }
