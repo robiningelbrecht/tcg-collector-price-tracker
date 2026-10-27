@@ -15,8 +15,11 @@
     <body class="bg-page font-sans text-sm leading-[1.45] text-ink antialiased">
         <header class="sticky top-0 z-40 bg-dark-900 shadow-[0_1px_0_var(--color-dark-700)]">
             <div class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4">
-                <a href="{{ path('dashboard') }}" class="flex items-center gap-3">
-                    <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="h-6 w-auto sm:h-7">
+                <a href="{{ path('dashboard') }}" class="flex shrink-0 items-center gap-3">
+                    <span class="block h-8 w-[30px] overflow-hidden sm:hidden">
+                        <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="-ml-[6px] h-8 w-auto max-w-none">
+                    </span>
+                    <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="hidden h-7 w-auto sm:block">
                     <span class="hidden h-5 w-px bg-dark-600 sm:block"></span>
                     <span class="hidden text-[13px] font-semibold text-dark-300 sm:block">Price tracker</span>
                 </a>
