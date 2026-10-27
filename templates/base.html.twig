@@ -23,6 +23,15 @@
             </div>
         </header>
         {% block body %}{% endblock %}
+        <div class="modal" data-card-modal>
+            <div class="relative w-full max-w-[980px] overflow-hidden rounded-xl border border-line bg-panel">
+                <div class="flex items-center justify-between bg-dark-900 px-5 py-3">
+                    <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="h-5 w-auto">
+                    <button aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-card-modal-close>×</button>
+                </div>
+                <div data-card-modal-body></div>
+            </div>
+        </div>
         <script src="{{ asset('js/dist/app.min.js') }}" type="module"></script>
         {% block javascripts %}{% endblock %}
     </body>

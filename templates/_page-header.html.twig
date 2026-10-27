@@ -1,0 +1,29 @@
+{% import 'macros.html.twig' as m %}
+
+{% set range = dashboard.range %}
+{% set route = app.request.attributes.get('_route') %}
+
+<div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+    <div>
+        <h1 class="m-0 text-2xl font-bold">{{ title }}</h1>
+        <div class="sub">
+            {{ dashboard.cardCount }} cards · {{ dashboard.cards|length }} priced · Cardmarket trend (EUR){% if dashboard.lastDate %} · {{ dashboard.lastDate|date('j M Y') }}{% endif %}
+        </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+        <a href="{{ path('register_owned_card') }}" class="btn">Add card</a>
+        <nav class="seg">
+            {% for option in ranges %}
+                {% set covered = dashboard.covers(option) %}
+                <a href="{{ path(route, app.request.query.all|merge({range: option.value})) }}" class="{{ option == range ? 'on' }} {{ covered ? '' : 'partial' }}" title="{{ m.rangeTitle(covered, dashboard.priceDayCount) }}">{{ option.label }}</a>
+            {% endfor %}
+        </nav>
+    </div>
+</div>
+
+{% if dashboard.firstDate and not dashboard.rangeComplete %}
+    <div class="mb-4 rounded-md border-l-4 border-brand bg-chip px-3 py-2 text-[12.5px] text-muted">
+        Price history started on {{ dashboard.firstDate|date('j M Y') }} ({{ m.days(dashboard.priceDayCount) }} of prices so far).
+        Changes over {{ range.label }} show up once the history covers {{ range.days }} days.
+    </div>
+{% endif %}

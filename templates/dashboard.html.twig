@@ -7,30 +7,7 @@
 
 {% block body %}
     <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
-        <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
-            <div>
-                <h1 class="m-0 text-2xl font-bold">Collection price tracker</h1>
-                <div class="sub">
-                    {{ dashboard.cardCount }} cards · {{ cards|length }} priced · Cardmarket trend (EUR){% if dashboard.lastDate %} · {{ dashboard.lastDate|date('j M Y') }}{% endif %}
-                </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <a href="{{ path('register_owned_card') }}" class="btn">Add card</a>
-                <nav class="seg">
-                    {% for option in ranges %}
-                        {% set covered = dashboard.covers(option) %}
-                        <a href="{{ path('dashboard', {range: option.value, mode: mode.value}) }}" class="{{ option == range ? 'on' }} {{ covered ? '' : 'partial' }}" title="{{ m.rangeTitle(covered, dashboard.priceDayCount) }}">{{ option.label }}</a>
-                    {% endfor %}
-                </nav>
-            </div>
-        </div>
-
-        {% if dashboard.firstDate and not dashboard.rangeComplete %}
-            <div class="mb-4 rounded-md border-l-4 border-brand bg-chip px-3 py-2 text-[12.5px] text-muted">
-                Price history started on {{ dashboard.firstDate|date('j M Y') }} ({{ m.days(dashboard.priceDayCount) }} of prices so far).
-                Changes over {{ range.label }} show up once the history covers {{ range.days }} days.
-            </div>
-        {% endif %}
+        {{ include('_page-header.html.twig', {title: 'Collection price tracker'}) }}
 
         {% if cards is empty %}
             <div class="panel mb-4"><div class="empty">No priced cards yet.</div></div>
@@ -261,14 +238,4 @@
             </details>
         {% endif %}
     </main>
-
-    <div class="modal" data-card-modal>
-        <div class="relative w-full max-w-[980px] overflow-hidden rounded-xl border border-line bg-panel">
-            <div class="flex items-center justify-between bg-dark-900 px-5 py-3">
-                <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="h-5 w-auto">
-                <button aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-card-modal-close>×</button>
-            </div>
-            <div data-card-modal-body></div>
-        </div>
-    </div>
 {% endblock %}
