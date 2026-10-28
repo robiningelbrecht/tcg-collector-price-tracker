@@ -1,3 +1,5 @@
+import Chart from 'chart.js/auto';
+
 export function initPriceToggle(root) {
     const html = document.documentElement;
     root.querySelectorAll("[data-price-toggle]").forEach(button => {
@@ -6,6 +8,7 @@ export function initPriceToggle(root) {
             const hidden = html.classList.toggle("prices-hidden");
             hidden ? localStorage.setItem("hidePrices", "1") : localStorage.removeItem("hidePrices");
             button.setAttribute("aria-pressed", hidden);
+            Object.values(Chart.instances).forEach(chart => chart.update());
         });
     });
 }

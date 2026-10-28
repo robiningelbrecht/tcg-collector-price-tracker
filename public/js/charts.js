@@ -2,7 +2,7 @@ import Chart from 'chart.js/auto';
 const PALETTE = ["#FA7035", "#F2B33D", "#106BC5", "#8B6FD6", "#3A9A3F", "#DC4A46", "#2BB3B1", "#C2569B", "#7A8286", "#A1683A"];
 
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-const fmtEur = v => "€" + (Math.abs(v) >= 100 ? Math.round(v).toLocaleString("en-GB") : v.toFixed(2));
+const fmtEur = v => document.documentElement.classList.contains("prices-hidden") ? "€•••" : "€" + (Math.abs(v) >= 100 ? Math.round(v).toLocaleString("en-GB") : v.toFixed(2));
 const fmtPct = p => (p >= 0 ? "+" : "−") + Math.abs(p * 100).toFixed(1) + "%";
 const toDate = label => new Date(label + "T00:00:00Z");
 
