@@ -3,6 +3,7 @@ import {initCardModal} from './card-modal';
 import {initCharts} from './charts';
 import {initDataTables} from './data-table';
 import {initDispatchCommandForms} from './dispatch-command-form';
+import {initPriceToggle} from './price-visibility';
 import {initSetSearch} from './set-search';
 import {initSparklines} from './sparklines';
 
@@ -15,5 +16,6 @@ initCharts(document);
 initSparklines(document);
 initDataTables(document);
 initDispatchCommandForms(document);
+initPriceToggle(document);
 document.querySelectorAll('[data-card-modal]').forEach(initCardModal);
 document.querySelectorAll('[data-set-search]').forEach(initSetSearch);

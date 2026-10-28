@@ -60,6 +60,7 @@
   .thumb { @apply h-11 w-8 flex-none rounded-sm bg-chip object-cover; }
   .tag { @apply ml-1 inline-block rounded bg-brand-soft px-1.5 align-[1px] text-[10.5px] font-bold text-brand; }
   .tag-muted { @apply bg-chip text-muted; }
+  .prices-hidden .price { @apply select-none blur-[6px]; }
   .chip { @apply rounded-full bg-chip px-2.5 py-0.5 text-[12.5px] tabular-nums; }
   .stat { @apply rounded-md bg-chip px-2.5 py-2; }
   .stat .l { @apply text-[11px] font-semibold uppercase tracking-wide text-muted; }

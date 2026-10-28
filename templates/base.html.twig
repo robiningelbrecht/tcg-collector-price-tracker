@@ -8,6 +8,7 @@
         <meta name="csrf-token" content="{{ csrf_token('dispatch-command') }}">
         <meta name="dispatch-command-url" content="{{ path('dispatch_command') }}">
         <title>{% block title %}TCG Price Tracker{% endblock %}</title>
+        <script>if (localStorage.getItem('hidePrices')) document.documentElement.classList.add('prices-hidden');</script>
         <link href="{{ asset('favicon.svg') }}" type="image/svg+xml" rel="icon">
         <link href="{{ asset('css/dist/tailwind.min.css') }}" rel="stylesheet">
         {% block stylesheets %}{% endblock %}
@@ -24,16 +25,22 @@
                     <span class="hidden h-5 w-px bg-dark-600 sm:block"></span>
                     <span class="hidden text-[13px] font-semibold text-dark-300 sm:block">Price tracker</span>
                 </a>
-                <nav class="hidden items-center gap-1 md:flex">
+                <nav class="ml-auto hidden items-center gap-1 md:flex">
                     {% for name, label in pages %}
                         <a href="{{ path(name, pageQuery) }}" class="rounded-md px-3 py-2 text-[13px] font-semibold {{ route == name ? 'bg-dark-700 text-dark-100' : 'text-dark-300 hover:text-white' }}" {{ route == name ? 'aria-current="page"' }}>{{ label }}</a>
                     {% endfor %}
                     <a href="{{ path('register_owned_card') }}" class="btn ml-2">+ Add card</a>
                 </nav>
-                <label for="menu-toggle" class="grid size-9 cursor-pointer place-items-center rounded-md border border-dark-600 text-dark-100 select-none hover:bg-dark-700 group-has-[#menu-toggle:focus-visible]:ring-2 group-has-[#menu-toggle:focus-visible]:ring-brand md:hidden">
-                    <svg aria-hidden="true" class="size-5 group-has-[#menu-toggle:checked]:hidden" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    <svg aria-hidden="true" class="hidden size-5 group-has-[#menu-toggle:checked]:block" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
-                </label>
+                <div class="flex items-center gap-2">
+                    <button type="button" data-price-toggle aria-pressed="false" aria-label="Hide prices" title="Hide prices" class="grid size-9 cursor-pointer place-items-center rounded-md border border-dark-600 text-dark-100 hover:bg-dark-700">
+                        <svg aria-hidden="true" class="size-5 in-[.prices-hidden]:hidden" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg aria-hidden="true" class="hidden size-5 in-[.prices-hidden]:block" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-2.6 3.6M6.6 6.6C3.7 8.5 2 12 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/></svg>
+                    </button>
+                    <label for="menu-toggle" class="grid size-9 cursor-pointer place-items-center rounded-md border border-dark-600 text-dark-100 select-none hover:bg-dark-700 group-has-[#menu-toggle:focus-visible]:ring-2 group-has-[#menu-toggle:focus-visible]:ring-brand md:hidden">
+                        <svg aria-hidden="true" class="size-5 group-has-[#menu-toggle:checked]:hidden" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+                        <svg aria-hidden="true" class="hidden size-5 group-has-[#menu-toggle:checked]:block" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                    </label>
+                </div>
             </div>
             <nav class="hidden border-t border-dark-700 max-md:group-has-[#menu-toggle:checked]:block">
                 <div class="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3">
