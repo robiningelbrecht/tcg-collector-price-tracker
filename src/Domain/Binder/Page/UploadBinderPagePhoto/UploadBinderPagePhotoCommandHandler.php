@@ -34,7 +34,7 @@ final readonly class UploadBinderPagePhotoCommandHandler implements CommandHandl
             throw CouldNotProcessCommand::withReason(sprintf('This binder has no page %d.', $command->getPageNumber()));
         }
 
-        if (!BinderPhotoStorage::supports(BinderPhotoStorage::detectMimeTypeOfContents($command->getPhoto()))) {
+        if (!BinderPhotoStorage::supports(BinderPhotoStorage::detectMimeType($command->getPhoto()))) {
             throw CouldNotProcessCommand::withReason('Upload a JPEG, PNG, WebP or HEIC photo.');
         }
 

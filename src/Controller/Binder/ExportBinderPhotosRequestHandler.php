@@ -38,13 +38,12 @@ final readonly class ExportBinderPhotosRequestHandler
         foreach ($this->binderRepository->findAll() as $binder) {
             $folder = $this->folderName($this->cardSetRepository->find($binder->getLanguage(), $binder->getCardSetId())?->getName() ?? $binder->getCardSetId());
             foreach ($this->binderPageRepository->findByBinder($binder) as $page) {
-                $path = $this->binderPhotoStorage->path($binder, $page->getFileName());
-                if (!is_file($path)) {
+                if (!$this->binderPhotoStorage->exists($binder, $page->getFileName())) {
                     continue;
                 }
 
                 $name = sprintf('%s/page-%03d.%s', $folder, $page->getPageNumber(), pathinfo($page->getFileName(), PATHINFO_EXTENSION));
-                $zip->addFile($path, $name);
+                $zip->addFromString($name, $this->binderPhotoStorage->read($binder, $page->getFileName()));
                 $zip->setCompressionName($name, \ZipArchive::CM_STORE);
                 $zip->setMtimeName($name, $page->getTakenOn()->getTimestamp());
                 ++$photoCount;

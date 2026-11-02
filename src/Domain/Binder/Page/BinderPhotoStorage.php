@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Domain\Binder\Page;
 
 use App\Domain\Binder\Binder;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use League\Flysystem\FilesystemOperator;
+use League\MimeTypeDetection\FinfoMimeTypeDetector;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 
 final readonly class BinderPhotoStorage
 {
@@ -18,8 +20,8 @@ final readonly class BinderPhotoStorage
     ];
 
     public function __construct(
-        #[Autowire('%env(BINDER_PHOTO_DIRECTORY)%')]
-        private string $directory,
+        #[Target('binder.photos.storage')]
+        private FilesystemOperator $storage,
     ) {
     }
 
@@ -28,66 +30,56 @@ final readonly class BinderPhotoStorage
         return isset(self::EXTENSIONS[$mimeType]);
     }
 
-    public static function detectMimeType(string $path): string
+    public static function detectMimeType(string $contents): string
     {
-        return (string) new \finfo(FILEINFO_MIME_TYPE)->file($path);
-    }
-
-    public static function detectMimeTypeOfContents(string $contents): string
-    {
-        return (string) new \finfo(FILEINFO_MIME_TYPE)->buffer($contents);
+        return new FinfoMimeTypeDetector()->detectMimeTypeFromBuffer($contents) ?? 'application/octet-stream';
     }
 
     public function store(Binder $binder, int $pageNumber, string $contents): string
     {
-        $mimeType = self::detectMimeTypeOfContents($contents);
+        $mimeType = self::detectMimeType($contents);
         if (!self::supports($mimeType)) {
             throw new \InvalidArgumentException(sprintf('Unsupported photo type %s', $mimeType));
         }
 
-        $directory = $this->binderDirectory($binder);
-        if (!is_dir($directory) && !mkdir($directory, 0o775, true) && !is_dir($directory)) {
-            throw new \RuntimeException(sprintf('Could not create directory %s', $directory));
-        }
-
         $fileName = sprintf('page-%d-%s.%s', $pageNumber, bin2hex(random_bytes(6)), self::EXTENSIONS[$mimeType]);
-        if (false === file_put_contents($directory.'/'.$fileName, $contents)) {
-            throw new \RuntimeException(sprintf('Could not write photo %s', $fileName));
-        }
+        $this->storage->write($this->location($binder, $fileName), $contents);
 
         return $fileName;
     }
 
+    public function exists(Binder $binder, string $fileName): bool
+    {
+        return $this->storage->fileExists($this->location($binder, $fileName));
+    }
+
+    public function read(Binder $binder, string $fileName): string
+    {
+        return $this->storage->read($this->location($binder, $fileName));
+    }
+
+    public function mimeType(Binder $binder, string $fileName): string
+    {
+        return $this->storage->mimeType($this->location($binder, $fileName));
+    }
+
     public function delete(Binder $binder, string $fileName): void
     {
-        $path = $this->path($binder, $fileName);
-        if (is_file($path)) {
-            unlink($path);
-        }
+        $this->storage->delete($this->location($binder, $fileName));
     }
 
     public function deleteAll(Binder $binder): void
     {
-        $directory = $this->binderDirectory($binder);
-        if (!is_dir($directory)) {
-            return;
-        }
-
-        foreach (glob($directory.'/*') ?: [] as $file) {
-            if (is_file($file)) {
-                unlink($file);
-            }
-        }
-        rmdir($directory);
+        $this->storage->deleteDirectory($this->directory($binder));
     }
 
-    public function path(Binder $binder, string $fileName): string
+    private function location(Binder $binder, string $fileName): string
     {
-        return $this->binderDirectory($binder).'/'.basename($fileName);
+        return $this->directory($binder).'/'.basename($fileName);
     }
 
-    private function binderDirectory(Binder $binder): string
+    private function directory(Binder $binder): string
     {
-        return sprintf('%s/%s/%s', $this->directory, $binder->getLanguage()->value, basename($binder->getCardSetId()));
+        return $binder->getLanguage()->value.'/'.basename($binder->getCardSetId());
     }
 }

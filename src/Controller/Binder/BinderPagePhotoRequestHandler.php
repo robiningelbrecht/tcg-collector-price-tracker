@@ -10,7 +10,7 @@ use App\Domain\Binder\Page\BinderPage;
 use App\Domain\Binder\Page\BinderPageRepository;
 use App\Domain\Binder\Page\BinderPhotoStorage;
 use App\Domain\TcgDex\TcgDexLanguage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,7 +31,7 @@ final readonly class BinderPagePhotoRequestHandler
         requirements: ['cardSetId' => '[^/]+', 'pageNumber' => '\d+', 'fileName' => '[^/]+'],
         methods: ['GET'],
     )]
-    public function handle(string $language, string $cardSetId, int $pageNumber, string $fileName): BinaryFileResponse
+    public function handle(string $language, string $cardSetId, int $pageNumber, string $fileName): Response
     {
         $tcgDexLanguage = TcgDexLanguage::tryFrom($language);
         $binder = null === $tcgDexLanguage ? null : $this->binderRepository->find($tcgDexLanguage, $cardSetId);
@@ -40,12 +40,14 @@ final readonly class BinderPagePhotoRequestHandler
             throw new NotFoundHttpException('Binder page photo not found');
         }
 
-        $path = $this->binderPhotoStorage->path($binder, $page->getFileName());
-        if (!is_file($path)) {
+        if (!$this->binderPhotoStorage->exists($binder, $page->getFileName())) {
             throw new NotFoundHttpException('Binder page photo not found');
         }
 
-        $response = new BinaryFileResponse($path, headers: ['Content-Type' => BinderPhotoStorage::detectMimeType($path)]);
+        $response = new Response(
+            $this->binderPhotoStorage->read($binder, $page->getFileName()),
+            headers: ['Content-Type' => $this->binderPhotoStorage->mimeType($binder, $page->getFileName())],
+        );
         $response->setPrivate();
         $response->setMaxAge(31536000);
         $response->setImmutable();

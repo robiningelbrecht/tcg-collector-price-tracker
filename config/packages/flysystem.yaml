@@ -1,0 +1,5 @@
+flysystem:
+    storages:
+        binder.photos.storage:
+            local:
+                directory: '%env(BINDER_PHOTO_DIRECTORY)%'
