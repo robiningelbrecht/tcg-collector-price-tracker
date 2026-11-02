@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+
+{% set setName = cardSet ? cardSet.name : binder.cardSetId %}
+{% set photographed = binderPages|filter(page => page.pageNumber <= binder.pageCount) %}
+{% set photographedCount = photographed|length %}
+{% set missingCount = binder.pageCount - photographedCount %}
+{% set coverage = photographedCount / binder.pageCount %}
+{% set lastTakenOn = photographed|map(page => page.takenOn)|sort|last %}
+
+{% block title %}{{ setName }} binder · TCG Price Tracker{% endblock %}
+
+{% block body %}
+    <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
+        <a href="{{ path('binders') }}" class="mb-3 inline-block text-[13px] text-link hover:underline">← All binders</a>
+
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+            <div class="flex items-center gap-4">
+                {% if cardSet and cardSet.logo %}
+                    <div class="binder-logo hidden h-14 w-36 sm:grid"><img src="{{ cardSet.logo }}.webp" alt="" referrerpolicy="no-referrer"></div>
+                {% endif %}
+                <div>
+                    <h1 class="m-0 text-2xl font-bold">{{ setName }}{% if missingCount == 0 %}<span class="tag">COMPLETE</span>{% endif %}</h1>
+                    <div class="sub">
+                        {{ cardSet and cardSet.serieName ? cardSet.serieName ~ ' · ' }}{{ binder.pageCount }} pages · {{ binder.pocketsPerPage }} pockets per page{% if lastTakenOn %} · updated {{ lastTakenOn|date('j M Y') }}{% endif %}
+                    </div>
+                </div>
+            </div>
+            <nav class="seg" data-tabs="binder-pages">
+                <button type="button" data-tab="all" class="on" aria-selected="true">All</button>
+                <button type="button" data-tab="missing" aria-selected="false">Missing{% if missingCount > 0 %} ({{ missingCount }}){% endif %}</button>
+            </nav>
+        </div>
+
+        <section class="panel">
+            <div class="mb-3 flex items-center justify-between gap-2">
+                <h2 class="panel-title">Pages</h2>
+                <span class="sub">{{ photographedCount }} of {{ binder.pageCount }} photographed</span>
+            </div>
+            <div class="bar mb-4 {{ missingCount == 0 ? 'done' }}"><span style="width: {{ (coverage * 100)|round }}%"></span></div>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+                {% for pageNumber in 1..binder.pageCount %}
+                    {% set binderPage = binderPages.findByPageNumber(pageNumber) %}
+                    {% if binderPage %}
+                        <div class="slot" data-tab-pane="binder-pages" data-tab="all">
+                            <div class="grid size-full place-items-center text-muted">Page {{ pageNumber }}</div>
+                            <div class="lbl"><span>Page {{ pageNumber }}</span><span class="font-normal text-dark-200">{{ binderPage.takenOn|date('j M Y') }}</span></div>
+                        </div>
+                    {% else %}
+                        <div class="slot missing" data-tab-pane="binder-pages" data-tab="all missing">
+                            <span class="flex flex-col items-center gap-1.5">
+                                <svg aria-hidden="true" class="size-7" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+                                <b class="text-[13px]">Page {{ pageNumber }}</b>
+                                <span class="text-xs">No photo yet</span>
+                            </span>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                {% if missingCount == 0 %}
+                    <div class="empty col-span-full" data-tab-pane="binder-pages" data-tab="missing" hidden>Every page has a photo.</div>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+{% endblock %}
