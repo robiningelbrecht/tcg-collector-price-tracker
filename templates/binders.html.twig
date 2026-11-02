@@ -11,7 +11,12 @@
                     {{ binders|length }} binder{{ binders|length == 1 ? '' : 's' }} · {{ binders.photographedPageCount }} of {{ binders.pageCount }} pages photographed{% if binders.lastTakenOn %} · last photo {{ binders.lastTakenOn|date('j M Y') }}{% endif %}
                 </div>
             </div>
-            <button type="button" class="btn" data-modal-open="add-binder">+ Add binder</button>
+            <div class="flex flex-wrap items-center gap-2">
+                {% if binders.photographedPageCount > 0 %}
+                    <a href="{{ path('export_binder_photos') }}" class="btn btn-muted" download>Export all photos</a>
+                {% endif %}
+                <button type="button" class="btn" data-modal-open="add-binder">+ Add binder</button>
+            </div>
         </div>
 
         {% if binders is empty %}
