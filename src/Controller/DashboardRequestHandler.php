@@ -38,7 +38,6 @@ final readonly class DashboardRequestHandler
             'dashboard' => $dashboard,
             'ranges' => PriceRange::cases(),
             'moverModes' => MoverMode::cases(),
-            'insightView' => InsightView::tryFrom($request->query->getString('insight')) ?? InsightView::MOST_VOLATILE,
             'insightViews' => InsightView::cases(),
         ]));
     }
