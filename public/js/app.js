@@ -6,6 +6,7 @@ import {initDispatchCommandForms} from './dispatch-command-form';
 import {initPriceToggle} from './price-visibility';
 import {initSetSearch} from './set-search';
 import {initSparklines} from './sparklines';
+import {initTabs} from './tabs';
 
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
@@ -17,5 +18,6 @@ initSparklines(document);
 initDataTables(document);
 initDispatchCommandForms(document);
 initPriceToggle(document);
+initTabs(document);
 document.querySelectorAll('[data-card-modal]').forEach(initCardModal);
 document.querySelectorAll('[data-set-search]').forEach(initSetSearch);
