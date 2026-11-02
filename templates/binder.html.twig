@@ -42,7 +42,7 @@
                     {% set binderPage = binderPages.findByPageNumber(pageNumber) %}
                     {% if binderPage %}
                         <div class="slot" data-tab-pane="binder-pages" data-tab="all">
-                            <div class="grid size-full place-items-center text-muted">Page {{ pageNumber }}</div>
+                            <img src="{{ path('binder_page_photo', {language: binder.language.value, cardSetId: binder.cardSetId, pageNumber: pageNumber, fileName: binderPage.fileName}) }}" alt="Page {{ pageNumber }}" loading="lazy">
                             <div class="lbl"><span>Page {{ pageNumber }}</span><span class="font-normal text-dark-200">{{ binderPage.takenOn|date('j M Y') }}</span></div>
                         </div>
                     {% else %}
