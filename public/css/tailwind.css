@@ -98,7 +98,8 @@
   .slot { @apply relative aspect-[4/5] overflow-hidden rounded-md border border-line bg-dark-900; }
   .slot.missing { @apply grid cursor-pointer place-items-center border-dashed border-dark-500 text-muted transition-colors hover:border-brand hover:text-brand; }
   .slot.uploading { @apply pointer-events-none animate-pulse opacity-60; }
-  .slot .acts { @apply absolute right-1.5 top-1.5 flex gap-1; }
+  .slot .acts { @apply absolute right-1.5 top-1.5 flex gap-1 opacity-0 transition-opacity; }
+  .slot:hover .acts, .slot:focus-within .acts { @apply opacity-100; }
   .slot .act { @apply grid size-8 cursor-pointer place-items-center rounded-md bg-black/70 text-white hover:bg-brand; }
   .slot .act.danger { @apply hover:bg-down; }
   .slot .view { @apply block size-full cursor-zoom-in; }
