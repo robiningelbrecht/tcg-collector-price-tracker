@@ -1,4 +1,5 @@
 import {destroyCharts, initCharts} from './charts';
+import {openModal} from './modal';
 
 export function initCardModal(modal) {
     const body = modal.querySelector("[data-card-modal-body]");
@@ -8,8 +9,7 @@ export function initCardModal(modal) {
         const current = ++request;
         if (!modal.classList.contains("open")) {
             body.innerHTML = '<div class="empty p-5">Loading…</div>';
-            modal.classList.add("open");
-            document.body.style.overflow = "hidden";
+            openModal(modal);
         }
         try {
             const response = await fetch(url);
@@ -24,19 +24,13 @@ export function initCardModal(modal) {
         }
     }
 
-    function close() {
+    modal.addEventListener("modal:closed", () => {
         request++;
         destroyCharts(body);
         body.innerHTML = "";
-        modal.classList.remove("open");
-        document.body.style.overflow = "";
-    }
-
+    });
     document.addEventListener("click", e => {
         const trigger = e.target.closest("[data-card-url]");
         if (trigger) open(trigger.dataset.cardUrl);
     });
-    modal.querySelector("[data-card-modal-close]").addEventListener("click", close);
-    modal.addEventListener("click", e => { if (e.target === modal) close(); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
 }

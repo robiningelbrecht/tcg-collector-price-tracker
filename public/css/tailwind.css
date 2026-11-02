@@ -43,7 +43,8 @@
   .seg { @apply inline-flex gap-0.5 rounded-md bg-chip p-[3px]; }
   .seg > * { @apply cursor-pointer rounded px-2.5 py-1.5 text-[13px] font-semibold text-muted transition-colors hover:text-ink; }
   .seg > .partial { @apply opacity-50; }
-  .seg > .on { @apply opacity-100 bg-brand text-white shadow-sm hover:bg-brand-hover hover:text-white; }
+  .seg > .on, .seg > :has(:checked) { @apply opacity-100 bg-brand text-white shadow-sm hover:bg-brand-hover hover:text-white; }
+  .seg > :has(:focus-visible) { @apply ring-2 ring-brand; }
   .seg.sm > * { @apply px-2 py-0.5 text-xs; }
 
   .kpi-l { @apply text-[11.5px] font-semibold uppercase tracking-wider text-muted; }

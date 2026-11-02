@@ -24,6 +24,7 @@ final readonly class BindersRequestHandler
     {
         return new Response($this->twig->render('binders.html.twig', [
             'binders' => $this->binderOverviewQuery->find(),
+            'setsBySerie' => $this->binderOverviewQuery->findOwnedSetsWithoutBinder(),
         ]));
     }
 }

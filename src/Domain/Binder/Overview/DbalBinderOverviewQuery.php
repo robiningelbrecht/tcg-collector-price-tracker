@@ -40,4 +40,28 @@ final readonly class DbalBinderOverviewQuery extends DbalRepository implements B
             $rows
         ));
     }
+
+    public function findOwnedSetsWithoutBinder(): array
+    {
+        $rows = $this->connection->executeQuery(
+            'SELECT DISTINCT CardSet.language, CardSet.cardSetId, CardSet.name, CardSet.serieId, CardSet.serieName, CardSet.releaseDate
+            FROM OwnedCard
+            JOIN CardSet ON CardSet.language = OwnedCard.language AND CardSet.cardSetId = OwnedCard.cardSetId
+            LEFT JOIN Binder ON Binder.language = CardSet.language AND Binder.cardSetId = CardSet.cardSetId
+            WHERE Binder.cardSetId IS NULL
+            ORDER BY COALESCE(CardSet.releaseDate, \'9999-12-31\'), CardSet.name COLLATE NOCASE'
+        )->fetchAllAssociative();
+
+        $series = [];
+        foreach ($rows as $row) {
+            $serieId = isset($row['serieId']) ? (string) $row['serieId'] : 'unknown';
+            $series[$serieId]['label'] ??= isset($row['serieName']) ? (string) $row['serieName'] : 'Other';
+            $series[$serieId]['sets'][] = [
+                'id' => $row['language'].'/'.$row['cardSetId'],
+                'label' => (string) $row['name'],
+            ];
+        }
+
+        return array_values($series);
+    }
 }

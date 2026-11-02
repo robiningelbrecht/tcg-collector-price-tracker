@@ -4,11 +4,14 @@
 
 {% block body %}
     <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
-        <div class="mb-4">
-            <h1 class="m-0 text-2xl font-bold">Binders</h1>
-            <div class="sub">
-                {{ binders|length }} binder{{ binders|length == 1 ? '' : 's' }} · {{ binders.photographedPageCount }} of {{ binders.pageCount }} pages photographed{% if binders.lastTakenOn %} · last photo {{ binders.lastTakenOn|date('j M Y') }}{% endif %}
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <h1 class="m-0 text-2xl font-bold">Binders</h1>
+                <div class="sub">
+                    {{ binders|length }} binder{{ binders|length == 1 ? '' : 's' }} · {{ binders.photographedPageCount }} of {{ binders.pageCount }} pages photographed{% if binders.lastTakenOn %} · last photo {{ binders.lastTakenOn|date('j M Y') }}{% endif %}
+                </div>
             </div>
+            <button type="button" class="btn" data-modal-open="add-binder">+ Add binder</button>
         </div>
 
         {% if binders is empty %}
@@ -72,4 +75,51 @@
             </section>
         {% endif %}
     </main>
+
+    <div class="modal" data-modal="add-binder">
+        <div class="relative w-full max-w-md overflow-hidden rounded-xl border border-line bg-panel">
+            <div class="flex items-center justify-between bg-dark-900 px-5 py-3">
+                <h2 class="panel-title">Add binder</h2>
+                <button type="button" aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-modal-close>×</button>
+            </div>
+            {% if setsBySerie is empty %}
+                <div class="empty p-5">Every set in your collection already has a binder.</div>
+            {% else %}
+                <form data-dispatch-command="create-binder" data-redirect="{{ path('binders') }}" class="flex flex-col gap-4 p-5">
+                    <div data-form-error class="hidden rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
+                    <label class="flex flex-col gap-1">
+                        <span class="kpi-l">Set</span>
+                        <select name="setId" required autofocus class="field">
+                            <option value="">Pick a set…</option>
+                            {% for serie in setsBySerie %}
+                                <optgroup label="{{ serie.label }}">
+                                    {% for set in serie.sets %}
+                                        <option value="{{ set.id }}">{{ set.label }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <div class="flex flex-wrap items-end gap-4">
+                        <label class="flex flex-col gap-1">
+                            <span class="kpi-l">Pages</span>
+                            <input type="number" name="pageCount" min="1" max="500" step="1" value="20" required class="field w-24">
+                        </label>
+                        <div class="flex flex-col gap-1">
+                            <span class="kpi-l">Pockets per page</span>
+                            <div class="seg">
+                                {% for pockets in [4, 9, 12] %}
+                                    <label><input type="radio" name="pocketsPerPage" value="{{ pockets }}" required {{ pockets == 9 ? 'checked' }} class="sr-only">{{ pockets }}</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" class="btn btn-muted" data-modal-close>Cancel</button>
+                        <button type="submit" class="btn">Add binder</button>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
 {% endblock %}
