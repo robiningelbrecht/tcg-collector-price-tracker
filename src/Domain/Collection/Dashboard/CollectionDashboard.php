@@ -20,7 +20,6 @@ final readonly class CollectionDashboard
      */
     private function __construct(
         private PriceRange $range,
-        private MoverMode $moverMode,
         private array $dates,
         private OverviewCards $overviewCards,
         private DashboardCards $cards,
@@ -28,7 +27,7 @@ final readonly class CollectionDashboard
     ) {
     }
 
-    public static function build(OverviewCards $overviewCards, PriceRange $range, MoverMode $moverMode): self
+    public static function build(OverviewCards $overviewCards, PriceRange $range): self
     {
         $dates = $overviewCards->getPriceDates();
         $ranks = $overviewCards->getRanks();
@@ -47,7 +46,6 @@ final readonly class CollectionDashboard
 
         return new self(
             range: $range,
-            moverMode: $moverMode,
             dates: $dates,
             overviewCards: $overviewCards,
             cards: $cards->sortedBy(fn (DashboardCard $a, DashboardCard $b): int => $a->getRank() <=> $b->getRank()),
@@ -79,11 +77,6 @@ final readonly class CollectionDashboard
     public function getRange(): PriceRange
     {
         return $this->range;
-    }
-
-    public function getMoverMode(): MoverMode
-    {
-        return $this->moverMode;
     }
 
     public function getLastDate(): ?\DateTimeImmutable
@@ -192,18 +185,18 @@ final readonly class CollectionDashboard
         return $topValue / $this->getTotalValue();
     }
 
-    public function getRisers(): DashboardCards
+    public function getRisers(MoverMode $mode): DashboardCards
     {
-        return $this->sortedByChange($this->moverMode)
-            ->filter(fn (DashboardCard $card): bool => $card->getChange($this->moverMode) > 0)
+        return $this->sortedByChange($mode)
+            ->filter(fn (DashboardCard $card): bool => $card->getChange($mode) > 0)
             ->slice(0, self::MOVER_COUNT);
     }
 
-    public function getFallers(): DashboardCards
+    public function getFallers(MoverMode $mode): DashboardCards
     {
-        return $this->sortedByChange($this->moverMode)
+        return $this->sortedByChange($mode)
             ->reverse()
-            ->filter(fn (DashboardCard $card): bool => $card->getChange($this->moverMode) < 0)
+            ->filter(fn (DashboardCard $card): bool => $card->getChange($mode) < 0)
             ->slice(0, self::MOVER_COUNT);
     }
 

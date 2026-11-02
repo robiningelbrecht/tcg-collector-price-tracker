@@ -32,7 +32,6 @@ final readonly class DashboardRequestHandler
             overviewCards: $overviewCards,
             range: PriceRange::tryFrom($request->query->getString('range'))
                 ?? PriceRange::NINETY_DAYS->orLongestCoveredBy($overviewCards->getHistoryDays()),
-            moverMode: MoverMode::tryFrom($request->query->getString('mode')) ?? MoverMode::PERCENTAGE,
         );
 
         return new Response($this->twig->render('dashboard.html.twig', [

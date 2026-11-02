@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Domain\Collection\Dashboard\CollectionDashboard;
-use App\Domain\Collection\Dashboard\MoverMode;
 use App\Domain\Collection\Dashboard\PriceRange;
 use App\Domain\Collection\Overview\CollectionOverviewQuery;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,7 +30,6 @@ final readonly class CollectionRequestHandler
             overviewCards: $overviewCards,
             range: PriceRange::tryFrom($request->query->getString('range'))
                 ?? PriceRange::NINETY_DAYS->orLongestCoveredBy($overviewCards->getHistoryDays()),
-            moverMode: MoverMode::PERCENTAGE,
         );
 
         return new Response($this->twig->render('collection.html.twig', [
