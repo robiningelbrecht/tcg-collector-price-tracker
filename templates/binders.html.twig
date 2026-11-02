@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Binders · TCG Price Tracker{% endblock %}
+
+{% block body %}
+    <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
+        <div class="mb-4">
+            <h1 class="m-0 text-2xl font-bold">Binders</h1>
+            <div class="sub">
+                {{ binders|length }} binder{{ binders|length == 1 ? '' : 's' }} · {{ binders.photographedPageCount }} of {{ binders.pageCount }} pages photographed{% if binders.lastTakenOn %} · last photo {{ binders.lastTakenOn|date('j M Y') }}{% endif %}
+            </div>
+        </div>
+
+        {% if binders is empty %}
+            <div class="panel"><div class="empty">No binders yet.</div></div>
+        {% else %}
+            <section class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div class="panel">
+                    <div class="kpi-l">Binders</div>
+                    <div class="kpi-v">{{ binders|length }}</div>
+                    <div class="kpi-s">{{ binders.fullyPhotographedCount }} fully photographed</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Pages photographed</div>
+                    <div class="kpi-v">{{ binders.photographedPageCount }}</div>
+                    <div class="kpi-s">{{ binders.missingPageCount }} still missing</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Coverage</div>
+                    <div class="kpi-v">{{ (binders.photoCoverage * 100)|round }}%</div>
+                    <div class="bar mt-2.5 {{ binders.missingPageCount == 0 ? 'done' }}"><span style="width: {{ (binders.photoCoverage * 100)|round }}%"></span></div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Oldest photo</div>
+                    {% if binders.oldestTakenOn %}
+                        <div class="kpi-v">{{ binders.oldestTakenOn|date('j M Y') }}</div>
+                        <div class="kpi-s">Last photo {{ binders.lastTakenOn|date('j M Y') }}</div>
+                    {% else %}
+                        <div class="kpi-v"><span class="sub">—</span></div>
+                        <div class="kpi-s">No photos yet</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            {% if binders.missingPageCount > 0 %}
+                <div class="mb-4 rounded-md border-l-4 border-brand bg-chip px-3 py-2 text-[12.5px] text-muted">
+                    {{ binders.missingPageCount }} page{{ binders.missingPageCount == 1 ? ' has' : 's have' }} no photo yet. Photograph every page so an insurance claim covers your whole collection.
+                </div>
+            {% endif %}
+
+            <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {% for binder in binders %}
+                    <article class="binder">
+                        <div class="binder-logo">
+                            {% if binder.logo %}
+                                <img src="{{ binder.logo }}.webp" alt="{{ binder.setName }}" loading="lazy" referrerpolicy="no-referrer">
+                            {% else %}
+                                <b>{{ binder.setName }}</b>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <b class="block truncate">{{ binder.setName }}{% if binder.fullyPhotographed %}<span class="tag">COMPLETE</span>{% endif %}</b>
+                            <span class="sub">{{ binder.serieName ? binder.serieName ~ ' · ' }}{{ binder.pageCount }} pages · {{ binder.pocketCount }} pockets</span>
+                        </div>
+                        <div class="bar {{ binder.fullyPhotographed ? 'done' }}"><span style="width: {{ (binder.photoCoverage * 100)|round }}%"></span></div>
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="chip">{{ binder.photographedPageCount }}/{{ binder.pageCount }} pages</span>
+                            <span class="sub">{{ binder.lastTakenOn ? 'Updated ' ~ binder.lastTakenOn|date('j M Y') : 'No photos yet' }}</span>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% endif %}
+    </main>
+{% endblock %}

@@ -86,6 +86,14 @@
   .cn > div > span { @apply text-xs text-muted; }
   canvas.sp { @apply block h-[30px] w-[110px]; }
 
+  .bar { @apply h-1.5 overflow-hidden rounded-full bg-chip; }
+  .bar > span { @apply block h-full rounded-full bg-brand; }
+  .bar.done > span { @apply bg-up; }
+
+  .binder { @apply flex min-w-0 flex-col gap-3 rounded-lg border border-line bg-panel p-4 shadow-sm; }
+  .binder-logo { @apply grid h-16 place-items-center rounded-md bg-dark-900 px-3; }
+  .binder-logo img { @apply max-h-12 max-w-full object-contain; }
+
   .modal { @apply fixed inset-0 z-50 hidden items-start justify-center overflow-auto bg-black/60 px-4 py-8; }
   .modal.open { @apply flex; }
 }
