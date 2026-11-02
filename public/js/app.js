@@ -1,4 +1,5 @@
 import Chart from 'chart.js/auto';
+import {initBinderLightbox} from './binder-lightbox';
 import {initBinderUpload} from './binder-upload';
 import {initCardModal} from './card-modal';
 import {initCharts} from './charts';
@@ -23,5 +24,6 @@ initModals(document);
 initPriceToggle(document);
 initTabs(document);
 initBinderUpload(document);
+document.querySelectorAll('[data-binder-lightbox]').forEach(initBinderLightbox);
 document.querySelectorAll('[data-card-modal]').forEach(initCardModal);
 document.querySelectorAll('[data-set-search]').forEach(initSetSearch);

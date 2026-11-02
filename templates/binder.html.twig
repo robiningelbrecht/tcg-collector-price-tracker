@@ -42,7 +42,10 @@
                     {% set binderPage = binderPages.findByPageNumber(pageNumber) %}
                     {% if binderPage %}
                         <div class="slot" data-tab-pane="binder-pages" data-tab="all">
-                            <img src="{{ path('binder_page_photo', {language: binder.language.value, cardSetId: binder.cardSetId, pageNumber: pageNumber, fileName: binderPage.fileName}) }}" alt="Page {{ pageNumber }}" loading="lazy">
+                            {% set photoUrl = path('binder_page_photo', {language: binder.language.value, cardSetId: binder.cardSetId, pageNumber: pageNumber, fileName: binderPage.fileName}) %}
+                            <button type="button" class="view" aria-label="View photo of page {{ pageNumber }}" data-binder-photo="{{ photoUrl }}" data-title="Page {{ pageNumber }}" data-taken-on="{{ binderPage.takenOn|date('j M Y') }}">
+                                <img src="{{ photoUrl }}" alt="Page {{ pageNumber }}" loading="lazy">
+                            </button>
                             <button type="button" class="replace" title="Replace photo" aria-label="Replace photo of page {{ pageNumber }}" data-binder-upload="{{ binder.language.value }}/{{ binder.cardSetId }}" data-page-number="{{ pageNumber }}">
                                 <svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
                             </button>
@@ -64,4 +67,21 @@
             </div>
         </section>
     </main>
+
+    <div class="modal" data-modal="binder-photo" data-binder-lightbox>
+        <div class="relative w-full max-w-[980px] overflow-hidden rounded-xl border border-line bg-panel">
+            <div class="flex items-center justify-between gap-3 bg-dark-900 px-5 py-3">
+                <div class="min-w-0">
+                    <b class="block truncate">{{ setName }} · <span data-binder-lightbox-title></span></b>
+                    <span class="sub" data-binder-lightbox-sub></span>
+                </div>
+                <div class="flex shrink-0 items-center gap-1">
+                    <button type="button" aria-label="Previous photo" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-binder-lightbox-step="-1">‹</button>
+                    <button type="button" aria-label="Next photo" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-binder-lightbox-step="1">›</button>
+                    <button type="button" aria-label="Close" class="ml-2 grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-modal-close>×</button>
+                </div>
+            </div>
+            <div class="grid place-items-center bg-dark-950 p-3"><img alt="" class="max-h-[75vh] w-auto rounded-md" data-binder-lightbox-image></div>
+        </div>
+    </div>
 {% endblock %}
