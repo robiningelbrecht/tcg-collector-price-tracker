@@ -115,7 +115,7 @@
                 <div class="panel">
                     <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
                         {% for view in insightViews %}
-                            <h2 class="panel-title" data-tab-pane="insight" data-tab="{{ view.value }}" {{ loop.first ? '' : 'hidden' }}>{{ view.title }}{% if view.value != 'volatile' and dashboard.twoYearHighSince %}<span class="sub font-normal"> · since {{ dashboard.twoYearHighSince|date('j M Y') }}</span>{% endif %}</h2>
+                            <h2 class="panel-title" data-tab-pane="insight" data-tab="{{ view.value }}" {{ loop.first ? '' : 'hidden' }}>{{ view.title }}</h2>
                         {% endfor %}
                         <nav class="seg sm" data-tabs="insight">
                             {% for option in insightViews %}

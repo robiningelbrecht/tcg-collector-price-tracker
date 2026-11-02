@@ -23,8 +23,8 @@ enum InsightView: string
     {
         return match ($this) {
             self::MOST_VOLATILE => 'Most volatile',
-            self::NEAR_TWO_YEAR_HIGH => 'At or near 2-year high',
-            self::BELOW_TWO_YEAR_HIGH => 'Furthest below 2-year high',
+            self::NEAR_TWO_YEAR_HIGH => 'Near 2-year high',
+            self::BELOW_TWO_YEAR_HIGH => 'Below 2-year high',
         };
     }
 }

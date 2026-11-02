@@ -104,11 +104,6 @@ final readonly class CollectionDashboard
         return $range->isCoveredBy($this->getHistoryDays());
     }
 
-    public function getTwoYearHighSince(): ?\DateTimeImmutable
-    {
-        return $this->covers(PriceRange::TWO_YEARS) ? null : $this->getFirstDate();
-    }
-
     public function isRangeComplete(): bool
     {
         return $this->covers($this->range);
