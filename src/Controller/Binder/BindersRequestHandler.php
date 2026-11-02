@@ -22,7 +22,7 @@ final readonly class BindersRequestHandler
     #[Route(path: '/binders', name: 'binders', methods: ['GET'])]
     public function handle(): Response
     {
-        return new Response($this->twig->render('binders.html.twig', [
+        return new Response($this->twig->render('binder/binders.html.twig', [
             'binders' => $this->binderOverviewQuery->find(),
             'setsBySerie' => $this->binderOverviewQuery->findOwnedSetsWithoutBinder(),
         ]));

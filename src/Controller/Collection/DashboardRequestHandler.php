@@ -34,7 +34,7 @@ final readonly class DashboardRequestHandler
                 ?? PriceRange::NINETY_DAYS->orLongestCoveredBy($overviewCards->getHistoryDays()),
         );
 
-        return new Response($this->twig->render('dashboard.html.twig', [
+        return new Response($this->twig->render('collection/dashboard.html.twig', [
             'dashboard' => $dashboard,
             'ranges' => PriceRange::cases(),
             'moverModes' => MoverMode::cases(),

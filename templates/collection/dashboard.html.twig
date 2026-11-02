@@ -1,12 +1,12 @@
 {% extends 'base.html.twig' %}
-{% import 'macros.html.twig' as m %}
+{% import 'collection/macros.html.twig' as m %}
 
 {% set range = dashboard.range %}
 {% set cards = dashboard.cards %}
 
 {% block body %}
     <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
-        {{ include('_page-header.html.twig', {title: 'Collection price tracker'}) }}
+        {{ include('collection/_page-header.html.twig', {title: 'Collection price tracker'}) }}
 
         {% if cards is empty %}
             <div class="panel mb-4"><div class="empty">No priced cards yet.</div></div>

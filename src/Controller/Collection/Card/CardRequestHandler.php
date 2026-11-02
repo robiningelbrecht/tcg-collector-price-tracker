@@ -33,7 +33,7 @@ final readonly class CardRequestHandler
             throw new NotFoundHttpException(sprintf('Card %s is not in the collection', $cardId));
         }
 
-        return new Response($this->twig->render('card.html.twig', [
+        return new Response($this->twig->render('collection/card/card.html.twig', [
             'detail' => CardDetail::build(
                 cards: $cards,
                 card: $card,

@@ -35,7 +35,7 @@ final readonly class BinderRequestHandler
             throw new NotFoundHttpException(sprintf('No binder for set %s/%s', $language, $cardSetId));
         }
 
-        return new Response($this->twig->render('binder.html.twig', [
+        return new Response($this->twig->render('binder/binder.html.twig', [
             'binder' => $binder,
             'cardSet' => $this->cardSetRepository->find($binder->getLanguage(), $binder->getCardSetId()),
             'binderPages' => $this->binderPageRepository->findByBinder($binder),

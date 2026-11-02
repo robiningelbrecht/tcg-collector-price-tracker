@@ -46,7 +46,7 @@ final readonly class RegisterOwnedCardRequestHandler
             /** @var array{id?: string} $set */
             $set = is_array($card['set'] ?? null) ? $card['set'] : [];
 
-            return new Response($this->twig->render('register-owned-card.html.twig', [
+            return new Response($this->twig->render('collection/card/register-owned-card.html.twig', [
                 'cardSets' => $cardSets,
                 'selectedSet' => $cardSets->findById($set['id'] ?? ''),
                 'card' => $card,
@@ -60,7 +60,7 @@ final readonly class RegisterOwnedCardRequestHandler
 
         $cardSetId = $request->query->getString('set');
         if ('' === $cardSetId) {
-            return new Response($this->twig->render('register-owned-card.html.twig', [
+            return new Response($this->twig->render('collection/card/register-owned-card.html.twig', [
                 'cardSets' => $cardSets,
             ]));
         }
@@ -70,7 +70,7 @@ final readonly class RegisterOwnedCardRequestHandler
             throw new NotFoundHttpException(sprintf('Set %s was not found', $cardSetId));
         }
 
-        return new Response($this->twig->render('register-owned-card.html.twig', [
+        return new Response($this->twig->render('collection/card/register-owned-card.html.twig', [
             'cardSets' => $cardSets,
             'selectedSet' => $selectedSet,
             'cards' => RegistrableCard::listFromTcgDexSet($set, $this->ownedCardRepository->findByCardSetId($language, $cardSetId)),

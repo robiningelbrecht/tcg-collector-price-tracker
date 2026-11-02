@@ -32,7 +32,7 @@ final readonly class CollectionRequestHandler
                 ?? PriceRange::NINETY_DAYS->orLongestCoveredBy($overviewCards->getHistoryDays()),
         );
 
-        return new Response($this->twig->render('collection.html.twig', [
+        return new Response($this->twig->render('collection/collection.html.twig', [
             'dashboard' => $dashboard,
             'ranges' => PriceRange::cases(),
         ]));

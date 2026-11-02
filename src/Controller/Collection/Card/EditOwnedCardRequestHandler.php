@@ -40,7 +40,7 @@ final readonly class EditOwnedCardRequestHandler
             $ownedCounts[$ownedVariant->getPriceVariantId()] = $ownedVariant->getCount();
         }
 
-        return new Response($this->twig->render('edit-owned-card.html.twig', [
+        return new Response($this->twig->render('collection/card/edit-owned-card.html.twig', [
             'ownedCard' => $ownedCard,
             'cardSet' => $this->cardSetRepository->find($ownedCard->getLanguage(), $ownedCard->getCardSetId()),
             'variants' => RegistrableVariant::listFromTcgDex($ownedCard->getData(), $ownedVariants, CardPrices::empty()),
