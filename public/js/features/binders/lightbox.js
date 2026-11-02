@@ -1,4 +1,4 @@
-import {openModal} from './modal';
+import {openModal} from '../../components/modal';
 
 export function initBinderLightbox(modal) {
     const photos = [...document.querySelectorAll("[data-binder-photo]")];

@@ -1,15 +1,15 @@
 import Chart from 'chart.js/auto';
-import {initBinderLightbox} from './binder-lightbox';
-import {initBinderUpload} from './binder-upload';
-import {initCardModal} from './card-modal';
-import {initCharts} from './charts';
-import {initDataTables} from './data-table';
-import {initDispatchCommandForms} from './dispatch-command-form';
-import {initModals} from './modal';
-import {initPriceToggle} from './price-visibility';
-import {initSetSearch} from './set-search';
-import {initSparklines} from './sparklines';
-import {initTabs} from './tabs';
+import {initBinderLightbox} from './features/binders/lightbox';
+import {initBinderUpload} from './features/binders/upload';
+import {initCardModal} from './features/cards/card-modal';
+import {initCharts} from './features/prices/charts';
+import {initDataTables} from './components/data-table';
+import {initDispatchCommandForms} from './components/dispatch-command-form';
+import {initModals} from './components/modal';
+import {initPriceToggle} from './features/prices/price-visibility';
+import {initSetSearch} from './features/cards/set-search';
+import {initSparklines} from './features/prices/sparklines';
+import {initTabs} from './components/tabs';
 
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 

@@ -1,5 +1,5 @@
-import {destroyCharts, initCharts} from './charts';
-import {openModal} from './modal';
+import {destroyCharts, initCharts} from '../prices/charts';
+import {openModal} from '../../components/modal';
 
 export function initCardModal(modal) {
     const body = modal.querySelector("[data-card-modal-body]");

@@ -1,4 +1,4 @@
-import {dispatchCommand} from './dispatch-command-form';
+import {dispatchCommand} from '../../components/dispatch-command-form';
 
 const MAX_PHOTO_SIZE = 20 * 1024 * 1024;
 
