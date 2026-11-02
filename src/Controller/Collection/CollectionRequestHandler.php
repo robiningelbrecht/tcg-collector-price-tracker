@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Collection;
 
 use App\Domain\Collection\Dashboard\CollectionDashboard;
-use App\Domain\Collection\Dashboard\InsightView;
-use App\Domain\Collection\Dashboard\MoverMode;
 use App\Domain\Collection\Dashboard\PriceRange;
 use App\Domain\Collection\Overview\CollectionOverviewQuery;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Twig\Environment;
 
 #[AsController]
-final readonly class DashboardRequestHandler
+final readonly class CollectionRequestHandler
 {
     public function __construct(
         private CollectionOverviewQuery $collectionOverviewQuery,
@@ -24,7 +22,7 @@ final readonly class DashboardRequestHandler
     ) {
     }
 
-    #[Route(path: '/', name: 'dashboard', methods: ['GET'])]
+    #[Route(path: '/collection', name: 'collection', methods: ['GET'])]
     public function handle(Request $request): Response
     {
         $overviewCards = $this->collectionOverviewQuery->find();
@@ -34,11 +32,9 @@ final readonly class DashboardRequestHandler
                 ?? PriceRange::NINETY_DAYS->orLongestCoveredBy($overviewCards->getHistoryDays()),
         );
 
-        return new Response($this->twig->render('dashboard.html.twig', [
+        return new Response($this->twig->render('collection.html.twig', [
             'dashboard' => $dashboard,
             'ranges' => PriceRange::cases(),
-            'moverModes' => MoverMode::cases(),
-            'insightViews' => InsightView::cases(),
         ]));
     }
 }

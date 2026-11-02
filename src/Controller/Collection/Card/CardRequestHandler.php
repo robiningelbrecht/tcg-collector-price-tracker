@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Collection\Card;
 
 use App\Domain\Collection\Dashboard\CardDetail;
 use App\Domain\Collection\Dashboard\PriceRange;

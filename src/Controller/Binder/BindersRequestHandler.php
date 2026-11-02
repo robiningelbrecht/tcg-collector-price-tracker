@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Controller;
+namespace App\Controller\Binder;
 
 use App\Domain\Binder\Overview\BinderOverviewQuery;
 use Symfony\Component\HttpFoundation\Response;
