@@ -6,7 +6,6 @@ namespace App\Domain\Binder\Page;
 
 use App\Domain\Binder\Binder;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 final readonly class BinderPhotoStorage
 {
@@ -34,15 +33,27 @@ final readonly class BinderPhotoStorage
         return (string) new \finfo(FILEINFO_MIME_TYPE)->file($path);
     }
 
-    public function store(Binder $binder, int $pageNumber, UploadedFile $file): string
+    public static function detectMimeTypeOfContents(string $contents): string
     {
-        $mimeType = self::detectMimeType($file->getPathname());
+        return (string) new \finfo(FILEINFO_MIME_TYPE)->buffer($contents);
+    }
+
+    public function store(Binder $binder, int $pageNumber, string $contents): string
+    {
+        $mimeType = self::detectMimeTypeOfContents($contents);
         if (!self::supports($mimeType)) {
             throw new \InvalidArgumentException(sprintf('Unsupported photo type %s', $mimeType));
         }
 
+        $directory = $this->binderDirectory($binder);
+        if (!is_dir($directory) && !mkdir($directory, 0o775, true) && !is_dir($directory)) {
+            throw new \RuntimeException(sprintf('Could not create directory %s', $directory));
+        }
+
         $fileName = sprintf('page-%d-%s.%s', $pageNumber, bin2hex(random_bytes(6)), self::EXTENSIONS[$mimeType]);
-        $file->move($this->binderDirectory($binder), $fileName);
+        if (false === file_put_contents($directory.'/'.$fileName, $contents)) {
+            throw new \RuntimeException(sprintf('Could not write photo %s', $fileName));
+        }
 
         return $fileName;
     }

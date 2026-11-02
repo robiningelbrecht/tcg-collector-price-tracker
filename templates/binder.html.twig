@@ -43,16 +43,19 @@
                     {% if binderPage %}
                         <div class="slot" data-tab-pane="binder-pages" data-tab="all">
                             <img src="{{ path('binder_page_photo', {language: binder.language.value, cardSetId: binder.cardSetId, pageNumber: pageNumber, fileName: binderPage.fileName}) }}" alt="Page {{ pageNumber }}" loading="lazy">
+                            <button type="button" class="replace" title="Replace photo" aria-label="Replace photo of page {{ pageNumber }}" data-binder-upload="{{ binder.language.value }}/{{ binder.cardSetId }}" data-page-number="{{ pageNumber }}">
+                                <svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+                            </button>
                             <div class="lbl"><span>Page {{ pageNumber }}</span><span class="font-normal text-dark-200">{{ binderPage.takenOn|date('j M Y') }}</span></div>
                         </div>
                     {% else %}
-                        <div class="slot missing" data-tab-pane="binder-pages" data-tab="all missing">
+                        <button type="button" class="slot missing" data-tab-pane="binder-pages" data-tab="all missing" data-binder-upload="{{ binder.language.value }}/{{ binder.cardSetId }}" data-page-number="{{ pageNumber }}">
                             <span class="flex flex-col items-center gap-1.5">
                                 <svg aria-hidden="true" class="size-7" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
                                 <b class="text-[13px]">Page {{ pageNumber }}</b>
-                                <span class="text-xs">No photo yet</span>
+                                <span class="text-xs">Add photo</span>
                             </span>
-                        </div>
+                        </button>
                     {% endif %}
                 {% endfor %}
                 {% if missingCount == 0 %}

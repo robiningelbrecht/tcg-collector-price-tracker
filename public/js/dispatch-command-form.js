@@ -1,4 +1,4 @@
-const dispatchCommand = async (commandName, payload) => {
+export const dispatchCommand = async (commandName, payload) => {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     if (!csrfToken) {
         throw new Error('csrf-token expected to be found');
