@@ -70,7 +70,7 @@ export function initDispatchCommandForms(rootNode = document) {
 
         try {
             await dispatchCommand(commandName, payload);
-            window.location.assign(form.dataset.redirect?.replace(/\{(\w+)\}/g, (_, key) => encodeURI(payload[key] ?? '')) ?? window.location.href);
+            window.location.assign((event.submitter?.dataset.redirect ?? form.dataset.redirect)?.replace(/\{(\w+)\}/g, (_, key) => encodeURI(payload[key] ?? '')) ?? window.location.href);
         } catch (error) {
             showError(errorBox, error.message);
             setSubmitting(form, false);

@@ -66,6 +66,21 @@ final readonly class BinderPhotoStorage
         }
     }
 
+    public function deleteAll(Binder $binder): void
+    {
+        $directory = $this->binderDirectory($binder);
+        if (!is_dir($directory)) {
+            return;
+        }
+
+        foreach (glob($directory.'/*') ?: [] as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+        rmdir($directory);
+    }
+
     public function path(Binder $binder, string $fileName): string
     {
         return $this->binderDirectory($binder).'/'.basename($fileName);

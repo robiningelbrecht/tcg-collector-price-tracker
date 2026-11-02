@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% set setName = cardSet ? cardSet.name : binder.cardSetId %}
+{% set setId = binder.language.value ~ '/' ~ binder.cardSetId %}
 {% set photographed = binderPages|filter(page => page.pageNumber <= binder.pageCount) %}
 {% set photographedCount = photographed|length %}
 {% set missingCount = binder.pageCount - photographedCount %}
@@ -25,10 +26,13 @@
                     </div>
                 </div>
             </div>
-            <nav class="seg" data-tabs="binder-pages">
-                <button type="button" data-tab="all" class="on" aria-selected="true">All</button>
-                <button type="button" data-tab="missing" aria-selected="false">Missing{% if missingCount > 0 %} ({{ missingCount }}){% endif %}</button>
-            </nav>
+            <div class="flex flex-wrap items-center gap-2">
+                <nav class="seg" data-tabs="binder-pages">
+                    <button type="button" data-tab="all" class="on" aria-selected="true">All</button>
+                    <button type="button" data-tab="missing" aria-selected="false">Missing{% if missingCount > 0 %} ({{ missingCount }}){% endif %}</button>
+                </nav>
+                <button type="button" class="btn btn-muted" data-modal-open="edit-binder">Edit binder</button>
+            </div>
         </div>
 
         <section class="panel">
@@ -46,13 +50,20 @@
                             <button type="button" class="view" aria-label="View photo of page {{ pageNumber }}" data-binder-photo="{{ photoUrl }}" data-title="Page {{ pageNumber }}" data-taken-on="{{ binderPage.takenOn|date('j M Y') }}">
                                 <img src="{{ photoUrl }}" alt="Page {{ pageNumber }}" loading="lazy">
                             </button>
-                            <button type="button" class="replace" title="Replace photo" aria-label="Replace photo of page {{ pageNumber }}" data-binder-upload="{{ binder.language.value }}/{{ binder.cardSetId }}" data-page-number="{{ pageNumber }}">
-                                <svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
-                            </button>
+                            <form class="acts" data-dispatch-command="remove-binder-page-photo">
+                                <input type="hidden" name="setId" value="{{ setId }}">
+                                <input type="hidden" name="pageNumber" value="{{ pageNumber }}">
+                                <button type="button" class="act" title="Replace photo" aria-label="Replace photo of page {{ pageNumber }}" data-binder-upload="{{ setId }}" data-page-number="{{ pageNumber }}">
+                                    <svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></svg>
+                                </button>
+                                <button type="submit" class="act danger" title="Remove photo" aria-label="Remove photo of page {{ pageNumber }}" data-confirm="Remove the photo of page {{ pageNumber }}?">
+                                    <svg aria-hidden="true" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                                </button>
+                            </form>
                             <div class="lbl"><span>Page {{ pageNumber }}</span><span class="font-normal text-dark-200">{{ binderPage.takenOn|date('j M Y') }}</span></div>
                         </div>
                     {% else %}
-                        <button type="button" class="slot missing" data-tab-pane="binder-pages" data-tab="all missing" data-binder-upload="{{ binder.language.value }}/{{ binder.cardSetId }}" data-page-number="{{ pageNumber }}">
+                        <button type="button" class="slot missing" data-tab-pane="binder-pages" data-tab="all missing" data-binder-upload="{{ setId }}" data-page-number="{{ pageNumber }}">
                             <span class="flex flex-col items-center gap-1.5">
                                 <svg aria-hidden="true" class="size-7" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
                                 <b class="text-[13px]">Page {{ pageNumber }}</b>
@@ -67,6 +78,38 @@
             </div>
         </section>
     </main>
+
+    <div class="modal" data-modal="edit-binder">
+        <div class="relative w-full max-w-md overflow-hidden rounded-xl border border-line bg-panel">
+            <div class="flex items-center justify-between bg-dark-900 px-5 py-3">
+                <h2 class="panel-title">Edit {{ setName }} binder</h2>
+                <button type="button" aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-modal-close>×</button>
+            </div>
+            <form data-dispatch-command="update-binder" class="flex flex-col gap-4 p-5">
+                <input type="hidden" name="setId" value="{{ setId }}">
+                <div data-form-error class="hidden rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
+                <div class="flex flex-wrap items-end gap-4">
+                    <label class="flex flex-col gap-1">
+                        <span class="kpi-l">Pages</span>
+                        <input type="number" name="pageCount" min="1" max="500" step="1" value="{{ binder.pageCount }}" required autofocus class="field w-24">
+                    </label>
+                    <div class="flex flex-col gap-1">
+                        <span class="kpi-l">Pockets per page</span>
+                        <div class="seg">
+                            {% for pockets in binder.pocketsPerPage in [4, 9, 12] ? [4, 9, 12] : [4, 9, 12, binder.pocketsPerPage]|sort %}
+                                <label><input type="radio" name="pocketsPerPage" value="{{ pockets }}" required {{ pockets == binder.pocketsPerPage ? 'checked' }} class="sr-only">{{ pockets }}</label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="btn btn-danger" formnovalidate data-dispatch-command="remove-binder" data-redirect="{{ path('binders') }}" data-confirm="Remove the {{ setName }} binder and all {{ photographedCount }} of its photos? This cannot be undone.">Remove binder</button>
+                    <button type="button" class="btn btn-muted ml-auto" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="modal" data-modal="binder-photo" data-binder-lightbox>
         <div class="relative w-full max-w-[980px] overflow-hidden rounded-xl border border-line bg-panel">

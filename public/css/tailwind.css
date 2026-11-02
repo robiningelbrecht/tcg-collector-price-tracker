@@ -98,7 +98,9 @@
   .slot { @apply relative aspect-[4/5] overflow-hidden rounded-md border border-line bg-dark-900; }
   .slot.missing { @apply grid cursor-pointer place-items-center border-dashed border-dark-500 text-muted transition-colors hover:border-brand hover:text-brand; }
   .slot.uploading { @apply pointer-events-none animate-pulse opacity-60; }
-  .slot .replace { @apply absolute right-1.5 top-1.5 grid size-8 cursor-pointer place-items-center rounded-md bg-black/70 text-white hover:bg-brand; }
+  .slot .acts { @apply absolute right-1.5 top-1.5 flex gap-1; }
+  .slot .act { @apply grid size-8 cursor-pointer place-items-center rounded-md bg-black/70 text-white hover:bg-brand; }
+  .slot .act.danger { @apply hover:bg-down; }
   .slot .view { @apply block size-full cursor-zoom-in; }
   .slot img { @apply size-full object-cover; }
   .slot .lbl { @apply absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-linear-to-t from-black/80 to-transparent px-2.5 pb-2 pt-6 text-xs font-semibold text-white; }
