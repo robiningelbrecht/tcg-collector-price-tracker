@@ -59,7 +59,7 @@
                         </tr></thead>
                         <tbody>
                             {% for product in products %}
-                                <tr data-modal-open="edit-sealed-{{ product.productId }}">
+                                <tr data-card-url="{{ path('sealed_product', {productId: product.productId}) }}">
                                     <td>
                                         <b class="block font-semibold">{{ product.name }}</b>
                                         <span class="text-xs text-muted">{{ product.categoryName }}</span>
@@ -83,7 +83,6 @@
                 {% endif %}
             </section>
         {% endif %}
-
     </main>
 
     <div class="modal" data-modal="add-sealed" data-sealed-search="{{ path('search_sealed_products') }}">
@@ -100,44 +99,4 @@
             </div>
         </div>
     </div>
-
-    {% for product in products %}
-        <div class="modal" data-modal="edit-sealed-{{ product.productId }}">
-            <div class="relative w-full max-w-2xl overflow-hidden rounded-xl border border-line bg-panel">
-                <div class="flex items-center justify-between bg-dark-900 px-5 py-3">
-                    <h2 class="panel-title truncate">{{ product.name }}</h2>
-                    <button type="button" aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-modal-close>×</button>
-                </div>
-                <div class="border-b border-line p-5">
-                    {% if product.hasPriceHistory %}
-                        <div class="sub mb-2">Value history{{ product.quantity > 1 ? ' for ' ~ product.quantity ~ ' items' }} · 30-day moving average dashed</div>
-                        <div class="relative h-[240px]"><canvas data-chart="card" data-chart-data="{{ product.chartData|json_encode }}"></canvas></div>
-                    {% else %}
-                        <div class="empty">No price history yet. Prices are fetched every morning.</div>
-                    {% endif %}
-                </div>
-                <form data-dispatch-command="update-owned-sealed-product" data-redirect="{{ path('sealed') }}" class="flex flex-col gap-4 p-5">
-                    <div data-form-error class="hidden rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
-                    <input type="hidden" name="productId" value="{{ product.productId }}">
-                    <div class="flex flex-wrap items-end gap-4">
-                        <label class="flex flex-col gap-1">
-                            <span class="kpi-l">Quantity</span>
-                            <input type="number" name="quantity" min="1" step="1" value="{{ product.quantity }}" required autofocus class="field w-24">
-                        </label>
-                        <label class="flex flex-col gap-1">
-                            <span class="kpi-l">Paid per unit (€)</span>
-                            <input type="text" name="paidPrice" inputmode="decimal" value="{{ product.paidPrice is not null ? product.paidPrice|number_format(2, '.', '') }}" placeholder="optional" class="field w-32">
-                        </label>
-                    </div>
-                    <div class="flex justify-between gap-2">
-                        <button type="submit" class="btn btn-danger" data-dispatch-command="remove-owned-sealed-product" data-confirm="Remove {{ product.name }} from your sealed products?">Remove</button>
-                        <div class="flex gap-2">
-                            <button type="button" class="btn btn-muted" data-modal-close>Cancel</button>
-                            <button type="submit" class="btn">Save</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    {% endfor %}
 {% endblock %}

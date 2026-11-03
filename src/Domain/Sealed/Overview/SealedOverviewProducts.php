@@ -16,6 +16,11 @@ final class SealedOverviewProducts extends Collection
         return SealedOverviewProduct::class;
     }
 
+    public function findByProductId(int $productId): ?SealedOverviewProduct
+    {
+        return $this->find(fn (SealedOverviewProduct $product): bool => $product->getProductId() === $productId);
+    }
+
     public function getQuantity(): int
     {
         return (int) $this->sum(fn (SealedOverviewProduct $product): int => $product->getQuantity());

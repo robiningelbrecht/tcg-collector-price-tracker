@@ -1,0 +1,40 @@
+{% import 'collection/macros.html.twig' as m %}
+<div class="p-5">
+    <h1 class="m-0 text-xl font-bold">{{ product.name }}{% if product.quantity > 1 %}<span class="tag">×{{ product.quantity }}</span>{% endif %}</h1>
+    <div class="sub">
+        {{ [product.categoryName, product.priceDate ? 'Priced on ' ~ product.priceDate|date('j M Y') : 'Not priced yet', 'Cardmarket']|filter(v => v)|join(' · ') }}
+    </div>
+    {% if product.hasPriceHistory %}
+        <div class="mb-2 mt-3.5 sub">Value history{{ product.quantity > 1 ? ' for ' ~ product.quantity ~ ' items' }} · 30-day moving average dashed</div>
+        <div class="relative h-[240px]"><canvas data-chart="card" data-chart-data="{{ product.chartData|json_encode }}"></canvas></div>
+    {% else %}
+        <div class="empty mt-3">No price history yet. Prices are fetched every morning.</div>
+    {% endif %}
+    <div class="mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] gap-2.5">
+        <div class="stat"><div class="l">Holding value</div><div class="v">{% if product.value is not null %}{{ m.eur(product.value) }}{% else %}<span class="sub">—</span>{% endif %}</div></div>
+        <div class="stat"><div class="l">Trend per unit</div><div class="v">{% if product.trend is not null %}{{ m.eur(product.trend) }}{% else %}<span class="sub">—</span>{% endif %}</div></div>
+        <div class="stat"><div class="l">Lowest listing</div><div class="v">{% if product.low is not null %}{{ m.eur(product.low) }}{% else %}<span class="sub">—</span>{% endif %}</div></div>
+        <div class="stat"><div class="l">Paid</div><div class="v">{% if product.totalPaid is not null %}{{ m.eur(product.totalPaid) }}{% else %}<span class="sub">—</span>{% endif %}</div></div>
+        <div class="stat"><div class="l">Profit / loss</div><div class="v">{% if product.profit is not null %}<span class="{{ m.trend(product.profit) }}">{{ m.signedEur(product.profit) }}{% if product.totalPaid > 0 %} ({{ m.pct(product.profit / product.totalPaid) }}){% endif %}</span>{% else %}<span class="sub">—</span>{% endif %}</div></div>
+    </div>
+    <form data-dispatch-command="update-owned-sealed-product" data-redirect="{{ path('sealed') }}" class="mt-5 flex flex-col gap-4 border-t border-line pt-5">
+        <div data-form-error class="hidden rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
+        <input type="hidden" name="productId" value="{{ product.productId }}">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div class="flex flex-wrap items-end gap-4">
+                <label class="flex flex-col gap-1">
+                    <span class="kpi-l">Quantity</span>
+                    <input type="number" name="quantity" min="1" step="1" value="{{ product.quantity }}" required class="field w-24">
+                </label>
+                <label class="flex flex-col gap-1">
+                    <span class="kpi-l">Paid per unit (€)</span>
+                    <input type="text" name="paidPrice" inputmode="decimal" value="{{ product.paidPrice is not null ? product.paidPrice|number_format(2, '.', '') }}" placeholder="optional" class="field w-32">
+                </label>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-danger" data-dispatch-command="remove-owned-sealed-product" data-confirm="Remove {{ product.name }} from your sealed products?">Remove</button>
+                <button type="submit" class="btn">Save</button>
+            </div>
+        </div>
+    </form>
+</div>
