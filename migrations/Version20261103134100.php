@@ -17,10 +17,12 @@ final class Version20261103134100 extends AbstractMigration
     public function up(Schema $schema): void
     {
         $this->addSql('CREATE TABLE SealedProduct (productId INTEGER NOT NULL, name VARCHAR(255) NOT NULL, categoryName VARCHAR(255) DEFAULT NULL, expansionId INTEGER DEFAULT NULL, addedOn DATETIME DEFAULT NULL, data CLOB NOT NULL, PRIMARY KEY (productId))');
+        $this->addSql('CREATE TABLE OwnedSealedProduct (productId INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, quantity INTEGER NOT NULL, paidPrice DOUBLE PRECISION DEFAULT NULL, addedOn DATETIME NOT NULL)');
     }
 
     public function down(Schema $schema): void
     {
         $this->addSql('DROP TABLE SealedProduct');
+        $this->addSql('DROP TABLE OwnedSealedProduct');
     }
 }

@@ -14,7 +14,7 @@ final readonly class SealedProduct
      * @param array<string, mixed> $data
      */
     private function __construct(
-        #[ORM\Id, ORM\Column(type: 'integer')]
+        #[ORM\Id, ORM\GeneratedValue(strategy: 'IDENTITY'), ORM\Column(type: 'integer')]
         private int $productId,
         #[ORM\Column(type: 'string')]
         private string $name,
