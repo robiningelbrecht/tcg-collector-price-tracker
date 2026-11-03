@@ -12,11 +12,11 @@
                     {{ products|length }} product{{ products|length == 1 ? '' : 's' }} · {{ products.quantity }} item{{ products.quantity == 1 ? '' : 's' }} · prices from Cardmarket
                 </div>
             </div>
-            <a href="#add-sealed" class="btn">+ Add product</a>
+            <button type="button" class="btn" data-modal-open="add-sealed">+ Add product</button>
         </div>
 
         {% if products is empty %}
-            <div class="panel mb-4"><div class="empty">No sealed products yet. Search below to add one.</div></div>
+            <div class="panel mb-4"><div class="empty">No sealed products yet. Use “+ Add product” to add one.</div></div>
         {% else %}
             {% set totalPaid = products.totalPaid %}
             {% set profit = products.profit %}
@@ -84,44 +84,22 @@
             </section>
         {% endif %}
 
-        <section class="panel" id="add-sealed">
-            <h2 class="panel-title mb-2">Add a sealed product</h2>
-            <form method="get" action="{{ path('sealed') }}#add-sealed" class="flex flex-wrap items-center gap-2">
-                <input type="search" name="q" value="{{ query }}" placeholder="Search Cardmarket, e.g. 30th celebration case" autocomplete="off" class="field min-w-0 flex-1 sm:max-w-md">
-                <button type="submit" class="btn btn-muted">Search</button>
-            </form>
-            {% if query != '' %}
-                {% if searchResults is empty %}
-                    <div class="empty mt-3">No products match “{{ query }}”.</div>
-                {% else %}
-                    <div class="mt-3">
-                        {% for result in searchResults %}
-                            <div class="flex flex-wrap items-center gap-3 border-t border-line py-2 first:border-t-0">
-                                <div class="min-w-0 flex-1">
-                                    <b class="block truncate font-semibold">{{ result.name }}</b>
-                                    <span class="text-xs text-muted">{{ result.categoryName }}{{ result.addedOn ? ' · on Cardmarket since ' ~ result.addedOn|date('M Y') }}</span>
-                                </div>
-                                {% if result.productId in products.productIds %}
-                                    <span class="tag tag-muted">OWNED</span>
-                                {% else %}
-                                    <form data-dispatch-command="add-owned-sealed-product" data-redirect="{{ path('sealed') }}" class="flex flex-wrap items-center gap-2">
-                                        <input type="hidden" name="productId" value="{{ result.productId }}">
-                                        <label class="flex items-center gap-1.5"><span class="kpi-l">Qty</span><input type="number" name="quantity" min="1" step="1" value="1" required class="field w-16"></label>
-                                        <label class="flex items-center gap-1.5"><span class="kpi-l">Paid €/unit</span><input type="text" name="paidPrice" inputmode="decimal" placeholder="optional" class="field w-24"></label>
-                                        <button type="submit" class="btn">Add</button>
-                                        <div data-form-error class="hidden basis-full rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
-                                    </form>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                    </div>
-                    {% if searchResults|length == searchLimit %}
-                        <div class="sub mt-2">Showing the newest {{ searchLimit }} matches. Add more words to narrow it down.</div>
-                    {% endif %}
-                {% endif %}
-            {% endif %}
-        </section>
     </main>
+
+    <div class="modal" data-modal="add-sealed" data-sealed-search="{{ path('search_sealed_products') }}">
+        <div class="relative w-full max-w-2xl overflow-hidden rounded-xl border border-line bg-panel">
+            <div class="flex items-center justify-between bg-dark-900 px-5 py-3">
+                <h2 class="panel-title">Add a sealed product</h2>
+                <button type="button" aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-modal-close>×</button>
+            </div>
+            <div class="flex flex-col gap-3 p-5">
+                <input type="search" placeholder="Search Cardmarket, e.g. 30th celebration case" autocomplete="off" autofocus class="field w-full" data-sealed-search-input>
+                <div class="max-h-[60vh] overflow-auto" data-sealed-search-results>
+                    <div class="empty">Type a product name, e.g. “30th celebration case”.</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {% for product in products %}
         <div class="modal" data-modal="edit-sealed-{{ product.productId }}">

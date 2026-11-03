@@ -1,0 +1,28 @@
+{% if query == '' %}
+    <div class="empty">Type a product name, e.g. “30th celebration case”.</div>
+{% elseif searchResults is empty %}
+    <div class="empty">No products match “{{ query }}”.</div>
+{% else %}
+    {% for result in searchResults %}
+        <div class="flex flex-wrap items-center gap-3 border-t border-line py-2 first:border-t-0">
+            <div class="min-w-0 flex-1">
+                <b class="block truncate font-semibold">{{ result.name }}</b>
+                <span class="text-xs text-muted">{{ result.categoryName }}{{ result.addedOn ? ' · on Cardmarket since ' ~ result.addedOn|date('M Y') }}</span>
+            </div>
+            {% if result.productId in ownedProductIds %}
+                <span class="tag tag-muted">OWNED</span>
+            {% else %}
+                <form data-dispatch-command="add-owned-sealed-product" data-redirect="{{ path('sealed') }}" class="flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="productId" value="{{ result.productId }}">
+                    <label class="flex items-center gap-1.5"><span class="kpi-l">Qty</span><input type="number" name="quantity" min="1" step="1" value="1" required class="field w-16"></label>
+                    <label class="flex items-center gap-1.5"><span class="kpi-l">Paid €/unit</span><input type="text" name="paidPrice" inputmode="decimal" placeholder="optional" class="field w-24"></label>
+                    <button type="submit" class="btn">Add</button>
+                    <div data-form-error class="hidden basis-full rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
+                </form>
+            {% endif %}
+        </div>
+    {% endfor %}
+    {% if searchResults|length == searchLimit %}
+        <div class="sub mt-2">Showing the newest {{ searchLimit }} matches. Add more words to narrow it down.</div>
+    {% endif %}
+{% endif %}
