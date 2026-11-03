@@ -7,7 +7,7 @@ export function openModal(modal) {
 export function closeModal(modal) {
     if (!modal.classList.contains("open")) return;
     modal.classList.remove("open");
-    document.body.style.overflow = "";
+    if (!document.querySelector("[data-modal].open")) document.body.style.overflow = "";
     modal.dispatchEvent(new CustomEvent("modal:closed"));
 }
 
@@ -22,6 +22,7 @@ export function initModals(root) {
         });
     });
     document.addEventListener("keydown", e => {
-        if (e.key === "Escape") root.querySelectorAll("[data-modal].open").forEach(closeModal);
+        const open = root.querySelectorAll("[data-modal].open");
+        if (e.key === "Escape" && open.length > 0) closeModal(open[open.length - 1]);
     });
 }

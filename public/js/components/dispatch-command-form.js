@@ -1,3 +1,5 @@
+import {confirmDialog} from './confirm-dialog';
+
 export const dispatchCommand = async (commandName, payload) => {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     if (!csrfToken) {
@@ -54,7 +56,8 @@ export function initDispatchCommandForms(rootNode = document) {
         event.preventDefault();
 
         const confirmMessage = event.submitter?.dataset.confirm;
-        if (confirmMessage && !window.confirm(confirmMessage)) {
+        const confirmLabel = event.submitter?.textContent.trim() || event.submitter?.title || 'Remove';
+        if (confirmMessage && !(await confirmDialog(confirmMessage, confirmLabel))) {
             return;
         }
 
