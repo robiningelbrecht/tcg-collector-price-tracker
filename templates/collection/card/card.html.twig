@@ -51,7 +51,7 @@
                     <div class="n"><b>{{ variant.label }}</b><span>×{{ variant.count }} · <a href="{{ path('edit_owned_card', {cardId: card.cardId, variantId: variant.priceVariantId}) }}" class="text-link hover:underline">Edit</a></span></div>
                     <div class="r">
                         {% if price %}
-                            {{ m.eur(price.trend) }}<small>{{ variant.count > 1 ? m.eur(price.trend * variant.count) ~ ' total' : 'per copy' }}</small>
+                            {{ m.eur(price.trend) }}<small>{% if variant.count > 1 %}{{ m.eur(price.trend * variant.count) }} total{% else %}per copy{% endif %}</small>
                         {% else %}
                             <span class="sub">{{ variant.missingPriceReason.label }}</span>
                         {% endif %}
