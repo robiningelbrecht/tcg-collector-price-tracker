@@ -21,6 +21,16 @@ final readonly class DbalSealedOverviewQuery extends DbalRepository implements S
             ORDER BY SealedProduct.name COLLATE NOCASE, OwnedSealedProduct.productId'
         )->fetchAllAssociative();
 
+        $trendHistories = [];
+        $prices = $this->connection->executeQuery(
+            'SELECT productId, date, trend FROM SealedProductPrice
+            WHERE trend IS NOT NULL AND productId IN (SELECT productId FROM OwnedSealedProduct)
+            ORDER BY date'
+        )->fetchAllAssociative();
+        foreach ($prices as $price) {
+            $trendHistories[(int) $price['productId']][(string) $price['date']] = (float) $price['trend'];
+        }
+
         return SealedOverviewProducts::fromArray(array_map(
             fn (array $result): SealedOverviewProduct => SealedOverviewProduct::create(
                 productId: (int) $result['productId'],
@@ -31,6 +41,7 @@ final readonly class DbalSealedOverviewQuery extends DbalRepository implements S
                 trend: isset($result['trend']) ? (float) $result['trend'] : null,
                 low: isset($result['low']) ? (float) $result['low'] : null,
                 priceDate: isset($result['date']) ? new \DateTimeImmutable((string) $result['date']) : null,
+                trendHistory: $trendHistories[(int) $result['productId']] ?? [],
             ),
             $results
         ));

@@ -4,8 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\Sealed\Overview;
 
+use App\Domain\Collection\Dashboard\PriceStats;
+
 final readonly class SealedOverviewProduct
 {
+    private const int MOVING_AVERAGE_DAYS = 30;
+
+    /**
+     * @param array<string, float> $trendHistory
+     */
     private function __construct(
         private int $productId,
         private string $name,
@@ -15,9 +22,13 @@ final readonly class SealedOverviewProduct
         private ?float $trend,
         private ?float $low,
         private ?\DateTimeImmutable $priceDate,
+        private array $trendHistory,
     ) {
     }
 
+    /**
+     * @param array<string, float> $trendHistory
+     */
     public static function create(
         int $productId,
         string $name,
@@ -27,6 +38,7 @@ final readonly class SealedOverviewProduct
         ?float $trend,
         ?float $low,
         ?\DateTimeImmutable $priceDate,
+        array $trendHistory,
     ): self {
         return new self(
             productId: $productId,
@@ -37,6 +49,7 @@ final readonly class SealedOverviewProduct
             trend: $trend,
             low: $low,
             priceDate: $priceDate,
+            trendHistory: $trendHistory,
         );
     }
 
@@ -96,5 +109,32 @@ final readonly class SealedOverviewProduct
         $totalPaid = $this->getTotalPaid();
 
         return null === $value || null === $totalPaid ? null : $value - $totalPaid;
+    }
+
+    public function hasPriceHistory(): bool
+    {
+        return [] !== $this->trendHistory;
+    }
+
+    /**
+     * @return array{labels: list<string>, values: list<float>, average: list<float|null>, days: int, trend: string}
+     */
+    public function getChartData(): array
+    {
+        $values = array_map(fn (float $trend): float => round($trend * $this->quantity, 2), array_values($this->trendHistory));
+        $first = $values[0] ?? null;
+        $last = $values[count($values) - 1] ?? null;
+
+        return [
+            'labels' => array_map(strval(...), array_keys($this->trendHistory)),
+            'values' => $values,
+            'average' => PriceStats::movingAverage($values, self::MOVING_AVERAGE_DAYS),
+            'days' => count($values),
+            'trend' => match (true) {
+                null === $first || null === $last || $first === $last => 'flat',
+                $last < $first => 'down',
+                default => 'up',
+            },
+        ];
     }
 }
