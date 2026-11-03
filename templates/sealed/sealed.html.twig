@@ -56,6 +56,7 @@
                             <th class="num">Paid</th>
                             <th class="num">Profit / loss</th>
                             <th class="num">Priced on</th>
+                            <th>Trend</th>
                         </tr></thead>
                         <tbody>
                             {% for product in products %}
@@ -71,6 +72,7 @@
                                     <td class="num">{% if product.totalPaid is not null %}{{ m.eur(product.totalPaid) }}{% else %}<span class="sub">—</span>{% endif %}</td>
                                     <td class="num">{% if product.profit is not null %}<span class="{{ m.trend(product.profit) }}">{{ m.signedEur(product.profit) }}</span>{% else %}<span class="sub">—</span>{% endif %}</td>
                                     <td class="num sub">{{ product.priceDate ? product.priceDate|date('j M Y') : 'Not yet' }}</td>
+                                    <td><canvas class="sp" data-sparkline="{{ product.sparkline|json_encode }}" data-trend="{{ product.sparklineTrend }}"></canvas></td>
                                 </tr>
                             {% endfor %}
                         </tbody>

@@ -9,6 +9,7 @@ use App\Domain\Collection\Dashboard\PriceStats;
 final readonly class SealedOverviewProduct
 {
     private const int MOVING_AVERAGE_DAYS = 30;
+    private const int SPARKLINE_DAYS = 90;
 
     /**
      * @param array<string, float> $trendHistory
@@ -121,20 +122,50 @@ final readonly class SealedOverviewProduct
      */
     public function getChartData(): array
     {
-        $values = array_map(fn (float $trend): float => round($trend * $this->quantity, 2), array_values($this->trendHistory));
-        $first = $values[0] ?? null;
-        $last = $values[count($values) - 1] ?? null;
+        $values = $this->getValueHistory();
 
         return [
             'labels' => array_map(strval(...), array_keys($this->trendHistory)),
             'values' => $values,
             'average' => PriceStats::movingAverage($values, self::MOVING_AVERAGE_DAYS),
             'days' => count($values),
-            'trend' => match (true) {
-                null === $first || null === $last || $first === $last => 'flat',
-                $last < $first => 'down',
-                default => 'up',
-            },
+            'trend' => $this->getDirection($values),
         ];
+    }
+
+    /**
+     * @return list<float>
+     */
+    public function getSparkline(): array
+    {
+        return array_slice($this->getValueHistory(), -self::SPARKLINE_DAYS);
+    }
+
+    public function getSparklineTrend(): string
+    {
+        return $this->getDirection($this->getSparkline());
+    }
+
+    /**
+     * @return list<float>
+     */
+    private function getValueHistory(): array
+    {
+        return array_map(fn (float $trend): float => round($trend * $this->quantity, 2), array_values($this->trendHistory));
+    }
+
+    /**
+     * @param list<float> $values
+     */
+    private function getDirection(array $values): string
+    {
+        $first = $values[0] ?? null;
+        $last = $values[count($values) - 1] ?? null;
+
+        return match (true) {
+            null === $first || null === $last || $first === $last => 'flat',
+            $last < $first => 'down',
+            default => 'up',
+        };
     }
 }
