@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Sealed\UpdateOwnedSealedProduct;
+namespace App\Domain\Sealed\Owned\UpdateOwnedSealedProduct;
 
-use App\Domain\Sealed\OwnedSealedProductRepository;
+use App\Domain\Sealed\Owned\OwnedSealedProductRepository;
 use App\Infrastructure\CQRS\Command\Command;
 use App\Infrastructure\CQRS\Command\CommandHandler;
 use App\Infrastructure\CQRS\Command\CouldNotProcessCommand;

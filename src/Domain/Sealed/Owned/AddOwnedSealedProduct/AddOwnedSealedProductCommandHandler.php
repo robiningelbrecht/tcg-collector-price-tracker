@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Sealed\AddOwnedSealedProduct;
+namespace App\Domain\Sealed\Owned\AddOwnedSealedProduct;
 
-use App\Domain\Sealed\OwnedSealedProduct;
-use App\Domain\Sealed\OwnedSealedProductRepository;
+use App\Domain\Sealed\Owned\OwnedSealedProduct;
+use App\Domain\Sealed\Owned\OwnedSealedProductRepository;
 use App\Domain\Sealed\SealedProductRepository;
 use App\Infrastructure\CQRS\Command\Command;
 use App\Infrastructure\CQRS\Command\CommandHandler;

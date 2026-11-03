@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Sealed;
+namespace App\Domain\Sealed\Owned;
 
 use App\Infrastructure\CQRS\Command\Deserialize\CouldNotDeserializeCommand;
 

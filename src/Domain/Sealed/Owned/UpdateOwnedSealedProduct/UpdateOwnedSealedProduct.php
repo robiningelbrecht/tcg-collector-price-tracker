@@ -2,19 +2,22 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Sealed\RemoveOwnedSealedProduct;
+namespace App\Domain\Sealed\Owned\UpdateOwnedSealedProduct;
 
+use App\Domain\Sealed\Owned\PaidPrice;
 use App\Infrastructure\CQRS\Command\Deserialize\CouldNotDeserializeCommand;
 use App\Infrastructure\CQRS\Command\Deserialize\DeserializableCommand;
 use App\Infrastructure\CQRS\Command\Deserialize\ProvidesCommandName;
 use App\Infrastructure\CQRS\Command\DomainCommand;
 
-final readonly class RemoveOwnedSealedProduct extends DomainCommand implements DeserializableCommand
+final readonly class UpdateOwnedSealedProduct extends DomainCommand implements DeserializableCommand
 {
     use ProvidesCommandName;
 
     private function __construct(
         private int $productId,
+        private int $quantity,
+        private ?float $paidPrice,
     ) {
     }
 
@@ -25,13 +28,30 @@ final readonly class RemoveOwnedSealedProduct extends DomainCommand implements D
             throw CouldNotDeserializeCommand::invalidPayload('A product is required.');
         }
 
+        $quantity = filter_var($payload['quantity'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if (false === $quantity) {
+            throw CouldNotDeserializeCommand::invalidPayload('The quantity must be a whole number of at least 1.');
+        }
+
         return new self(
             productId: $productId,
+            quantity: $quantity,
+            paidPrice: PaidPrice::fromPayload($payload['paidPrice'] ?? null),
         );
     }
 
     public function getProductId(): int
     {
         return $this->productId;
+    }
+
+    public function getQuantity(): int
+    {
+        return $this->quantity;
+    }
+
+    public function getPaidPrice(): ?float
+    {
+        return $this->paidPrice;
     }
 }

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Sealed\AddOwnedSealedProduct;
+namespace App\Domain\Sealed\Owned\AddOwnedSealedProduct;
 
-use App\Domain\Sealed\PaidPrice;
+use App\Domain\Sealed\Owned\PaidPrice;
 use App\Infrastructure\CQRS\Command\Deserialize\CouldNotDeserializeCommand;
 use App\Infrastructure\CQRS\Command\Deserialize\DeserializableCommand;
 use App\Infrastructure\CQRS\Command\Deserialize\ProvidesCommandName;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Sealed;
+namespace App\Domain\Sealed\Owned;
 
 use App\Infrastructure\Repository\DbalRepository;
 
@@ -40,6 +40,18 @@ final readonly class DbalOwnedSealedProductRepository extends DbalRepository imp
         )->fetchAssociative();
 
         return false === $result ? null : $this->hydrate($result);
+    }
+
+    public function findAll(): OwnedSealedProducts
+    {
+        $results = $this->connection->executeQuery(
+            'SELECT * FROM OwnedSealedProduct ORDER BY addedOn, productId'
+        )->fetchAllAssociative();
+
+        return OwnedSealedProducts::fromArray(array_map(
+            $this->hydrate(...),
+            $results
+        ));
     }
 
     /**

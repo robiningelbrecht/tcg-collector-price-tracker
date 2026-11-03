@@ -33,6 +33,16 @@ final readonly class CardmarketApi
         return $products;
     }
 
+    public function getPriceGuide(): PriceGuide
+    {
+        $data = $this->get(sprintf('priceGuide/price_guide_%d.json', self::POKEMON_GAME_ID));
+        if (!is_array($data['priceGuides'] ?? null)) {
+            throw new CouldNotReachCardmarket('Cardmarket returned a price guide without prices');
+        }
+
+        return PriceGuide::fromCardmarket($data);
+    }
+
     /**
      * @return array<mixed>
      */

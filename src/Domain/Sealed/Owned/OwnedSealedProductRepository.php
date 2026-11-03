@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\Sealed;
+namespace App\Domain\Sealed\Owned;
 
 interface OwnedSealedProductRepository
 {
@@ -11,4 +11,6 @@ interface OwnedSealedProductRepository
     public function delete(OwnedSealedProduct $ownedSealedProduct): void;
 
     public function find(int $productId): ?OwnedSealedProduct;
+
+    public function findAll(): OwnedSealedProducts;
 }
