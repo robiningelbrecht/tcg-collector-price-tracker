@@ -9,7 +9,7 @@ export function initTabs(root) {
                 tab.setAttribute("aria-selected", active);
             });
             document.querySelectorAll(`[data-tab-pane="${group}"]`).forEach(pane => {
-                pane.hidden = !pane.dataset.tab.split(" ").includes(value);
+                pane.hidden = pane.dataset.tab !== value;
             });
         });
     });

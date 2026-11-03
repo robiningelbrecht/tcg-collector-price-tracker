@@ -26,13 +26,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <nav class="seg" data-tabs="binder-pages">
-                    <button type="button" data-tab="all" class="on" aria-selected="true">All</button>
-                    <button type="button" data-tab="missing" aria-selected="false">Missing{% if missingCount > 0 %} ({{ missingCount }}){% endif %}</button>
-                </nav>
-                <button type="button" class="btn btn-muted" data-modal-open="edit-binder">Edit binder</button>
-            </div>
+            <button type="button" class="btn btn-muted" data-modal-open="edit-binder">Edit binder</button>
         </div>
 
         <section class="panel">
@@ -45,7 +39,7 @@
                 {% for pageNumber in 1..binder.pageCount %}
                     {% set binderPage = binderPages.findByPageNumber(pageNumber) %}
                     {% if binderPage %}
-                        <div class="slot" data-tab-pane="binder-pages" data-tab="all">
+                        <div class="slot">
                             {% set photoUrl = path('binder_page_photo', {language: binder.language.value, cardSetId: binder.cardSetId, pageNumber: pageNumber, fileName: binderPage.fileName}) %}
                             <button type="button" class="view" aria-label="View photo of page {{ pageNumber }}" data-binder-photo="{{ photoUrl }}" data-title="Page {{ pageNumber }}" data-taken-on="{{ binderPage.takenOn|date('j M Y') }}">
                                 <img src="{{ photoUrl }}" alt="Page {{ pageNumber }}" loading="lazy">
@@ -63,7 +57,7 @@
                             <div class="lbl"><span>Page {{ pageNumber }}</span><span class="font-normal text-dark-200">{{ binderPage.takenOn|date('j M Y') }}</span></div>
                         </div>
                     {% else %}
-                        <button type="button" class="slot missing" data-tab-pane="binder-pages" data-tab="all missing" data-binder-upload="{{ setId }}" data-page-number="{{ pageNumber }}">
+                        <button type="button" class="slot missing" data-binder-upload="{{ setId }}" data-page-number="{{ pageNumber }}">
                             <span class="flex flex-col items-center gap-1.5">
                                 <svg aria-hidden="true" class="size-7" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
                                 <b class="text-[13px]">Page {{ pageNumber }}</b>
@@ -72,9 +66,6 @@
                         </button>
                     {% endif %}
                 {% endfor %}
-                {% if missingCount == 0 %}
-                    <div class="empty col-span-full" data-tab-pane="binder-pages" data-tab="missing" hidden>Every page has a photo.</div>
-                {% endif %}
             </div>
         </section>
     </main>
