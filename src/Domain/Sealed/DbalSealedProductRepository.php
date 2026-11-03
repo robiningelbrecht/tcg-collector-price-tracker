@@ -39,6 +39,31 @@ final readonly class DbalSealedProductRepository extends DbalRepository implemen
         return false === $result ? null : $this->hydrate($result);
     }
 
+    public function search(string $query, int $limit): SealedProducts
+    {
+        $words = array_values(array_filter(preg_split('/\s+/', trim($query)) ?: [], fn (string $word): bool => '' !== $word));
+        if ([] === $words) {
+            return SealedProducts::empty();
+        }
+
+        $conditions = [];
+        $parameters = ['limit' => $limit];
+        foreach ($words as $index => $word) {
+            $conditions[] = sprintf("name LIKE :word%d ESCAPE '\\'", $index);
+            $parameters['word'.$index] = '%'.addcslashes($word, '%_\\').'%';
+        }
+
+        $results = $this->connection->executeQuery(
+            sprintf('SELECT * FROM SealedProduct WHERE %s ORDER BY addedOn DESC, productId DESC LIMIT :limit', implode(' AND ', $conditions)),
+            $parameters
+        )->fetchAllAssociative();
+
+        return SealedProducts::fromArray(array_map(
+            $this->hydrate(...),
+            $results
+        ));
+    }
+
     /**
      * @param array<string, mixed> $result
      */

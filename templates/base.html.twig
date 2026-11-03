@@ -16,7 +16,7 @@
     <body class="bg-page font-sans text-sm leading-[1.45] text-ink antialiased">
         {% set route = app.request.attributes.get('_route') %}
         {% set pageQuery = app.request.query.has('range') ? {range: app.request.query.get('range')} : {} %}
-        {% set pages = {dashboard: 'Dashboard', collection: 'Collection', binders: 'Binders'} %}
+        {% set pages = {dashboard: 'Dashboard', collection: 'Collection', sealed: 'Sealed', binders: 'Binders'} %}
         <header class="group sticky top-0 z-40 bg-dark-900 shadow-[0_1px_0_var(--color-dark-700)]">
             <input type="checkbox" id="menu-toggle" class="sr-only" aria-label="Toggle menu">
             <div class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4">

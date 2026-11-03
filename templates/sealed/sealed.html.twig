@@ -1,0 +1,157 @@
+{% extends 'base.html.twig' %}
+{% import 'collection/macros.html.twig' as m %}
+
+{% block title %}Sealed · TCG Price Tracker{% endblock %}
+
+{% block body %}
+    <main class="mx-auto max-w-7xl px-4 pb-16 pt-6">
+        <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <h1 class="m-0 text-2xl font-bold">Sealed</h1>
+                <div class="sub">
+                    {{ products|length }} product{{ products|length == 1 ? '' : 's' }} · {{ products.quantity }} item{{ products.quantity == 1 ? '' : 's' }} · prices from Cardmarket
+                </div>
+            </div>
+            <a href="#add-sealed" class="btn">+ Add product</a>
+        </div>
+
+        {% if products is empty %}
+            <div class="panel mb-4"><div class="empty">No sealed products yet. Search below to add one.</div></div>
+        {% else %}
+            {% set totalPaid = products.totalPaid %}
+            {% set profit = products.profit %}
+            <section class="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div class="panel">
+                    <div class="kpi-l">Value</div>
+                    <div class="kpi-v">{{ m.eur(products.value) }}</div>
+                    <div class="kpi-s">{{ products.unpricedCount > 0 ? products.unpricedCount ~ ' without a price' : 'Cardmarket trend' }}</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Paid</div>
+                    <div class="kpi-v">{% if totalPaid is not null %}{{ m.eur(totalPaid) }}{% else %}<span class="sub">—</span>{% endif %}</div>
+                    <div class="kpi-s">Purchase price</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Profit / loss</div>
+                    <div class="kpi-v">{% if profit is not null %}<span class="{{ m.trend(profit) }}">{{ m.signedEur(profit) }}</span>{% else %}<span class="sub">—</span>{% endif %}</div>
+                    <div class="kpi-s">{% if profit is not null and totalPaid > 0 %}{{ m.pct(profit / totalPaid) }} on products with a paid price{% else %}Add a paid price to see this{% endif %}</div>
+                </div>
+                <div class="panel">
+                    <div class="kpi-l">Items</div>
+                    <div class="kpi-v">{{ products.quantity }}</div>
+                    <div class="kpi-s">{{ products|length }} product{{ products|length == 1 ? '' : 's' }}</div>
+                </div>
+            </section>
+
+            <section class="panel mb-4">
+                <h2 class="panel-title mb-2">Your sealed products</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse tabular-nums">
+                        <thead><tr>
+                            <th>Product</th>
+                            <th class="num">Qty</th>
+                            <th class="num">Price</th>
+                            <th class="num">Low</th>
+                            <th class="num">Value</th>
+                            <th class="num">Paid</th>
+                            <th class="num">Profit / loss</th>
+                            <th class="num">Priced on</th>
+                        </tr></thead>
+                        <tbody>
+                            {% for product in products %}
+                                <tr data-modal-open="edit-sealed-{{ product.productId }}">
+                                    <td>
+                                        <b class="block font-semibold">{{ product.name }}</b>
+                                        <span class="text-xs text-muted">{{ product.categoryName }}</span>
+                                    </td>
+                                    <td class="num">{{ product.quantity }}</td>
+                                    <td class="num">{% if product.trend is not null %}{{ m.eur(product.trend) }}{% else %}<span class="sub">—</span>{% endif %}</td>
+                                    <td class="num">{% if product.low is not null %}{{ m.eur(product.low) }}{% else %}<span class="sub">—</span>{% endif %}</td>
+                                    <td class="num font-semibold">{% if product.value is not null %}{{ m.eur(product.value) }}{% else %}<span class="sub">—</span>{% endif %}</td>
+                                    <td class="num">{% if product.totalPaid is not null %}{{ m.eur(product.totalPaid) }}{% else %}<span class="sub">—</span>{% endif %}</td>
+                                    <td class="num">{% if product.profit is not null %}<span class="{{ m.trend(product.profit) }}">{{ m.signedEur(product.profit) }}</span>{% else %}<span class="sub">—</span>{% endif %}</td>
+                                    <td class="num sub">{{ product.priceDate ? product.priceDate|date('j M Y') : 'Not yet' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if products.unpricedCount > 0 %}
+                    <div class="mt-3 rounded-md border-l-4 border-brand bg-chip px-3 py-2 text-[12.5px] text-muted">
+                        Prices are fetched every morning. New products get their first price on the next refresh.
+                    </div>
+                {% endif %}
+            </section>
+        {% endif %}
+
+        <section class="panel" id="add-sealed">
+            <h2 class="panel-title mb-2">Add a sealed product</h2>
+            <form method="get" action="{{ path('sealed') }}#add-sealed" class="flex flex-wrap items-center gap-2">
+                <input type="search" name="q" value="{{ query }}" placeholder="Search Cardmarket, e.g. 30th celebration case" autocomplete="off" class="field min-w-0 flex-1 sm:max-w-md">
+                <button type="submit" class="btn btn-muted">Search</button>
+            </form>
+            {% if query != '' %}
+                {% if searchResults is empty %}
+                    <div class="empty mt-3">No products match “{{ query }}”.</div>
+                {% else %}
+                    <div class="mt-3">
+                        {% for result in searchResults %}
+                            <div class="flex flex-wrap items-center gap-3 border-t border-line py-2 first:border-t-0">
+                                <div class="min-w-0 flex-1">
+                                    <b class="block truncate font-semibold">{{ result.name }}</b>
+                                    <span class="text-xs text-muted">{{ result.categoryName }}{{ result.addedOn ? ' · on Cardmarket since ' ~ result.addedOn|date('M Y') }}</span>
+                                </div>
+                                {% if result.productId in products.productIds %}
+                                    <span class="tag tag-muted">OWNED</span>
+                                {% else %}
+                                    <form data-dispatch-command="add-owned-sealed-product" data-redirect="{{ path('sealed') }}" class="flex flex-wrap items-center gap-2">
+                                        <input type="hidden" name="productId" value="{{ result.productId }}">
+                                        <label class="flex items-center gap-1.5"><span class="kpi-l">Qty</span><input type="number" name="quantity" min="1" step="1" value="1" required class="field w-16"></label>
+                                        <label class="flex items-center gap-1.5"><span class="kpi-l">Paid €/unit</span><input type="text" name="paidPrice" inputmode="decimal" placeholder="optional" class="field w-24"></label>
+                                        <button type="submit" class="btn">Add</button>
+                                        <div data-form-error class="hidden basis-full rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if searchResults|length == searchLimit %}
+                        <div class="sub mt-2">Showing the newest {{ searchLimit }} matches. Add more words to narrow it down.</div>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </section>
+    </main>
+
+    {% for product in products %}
+        <div class="modal" data-modal="edit-sealed-{{ product.productId }}">
+            <div class="relative w-full max-w-md overflow-hidden rounded-xl border border-line bg-panel">
+                <div class="flex items-center justify-between bg-dark-900 px-5 py-3">
+                    <h2 class="panel-title truncate">{{ product.name }}</h2>
+                    <button type="button" aria-label="Close" class="grid size-8 cursor-pointer place-items-center rounded-md bg-dark-700 text-lg text-dark-100 hover:bg-brand hover:text-white" data-modal-close>×</button>
+                </div>
+                <form data-dispatch-command="update-owned-sealed-product" data-redirect="{{ path('sealed') }}" class="flex flex-col gap-4 p-5">
+                    <div data-form-error class="hidden rounded-md border-l-4 border-down bg-chip px-3 py-2 text-[12.5px] text-down"></div>
+                    <input type="hidden" name="productId" value="{{ product.productId }}">
+                    <div class="flex flex-wrap items-end gap-4">
+                        <label class="flex flex-col gap-1">
+                            <span class="kpi-l">Quantity</span>
+                            <input type="number" name="quantity" min="1" step="1" value="{{ product.quantity }}" required autofocus class="field w-24">
+                        </label>
+                        <label class="flex flex-col gap-1">
+                            <span class="kpi-l">Paid per unit (€)</span>
+                            <input type="text" name="paidPrice" inputmode="decimal" value="{{ product.paidPrice is not null ? product.paidPrice|number_format(2, '.', '') }}" placeholder="optional" class="field w-32">
+                        </label>
+                    </div>
+                    <div class="flex justify-between gap-2">
+                        <button type="submit" class="btn btn-danger" data-dispatch-command="remove-owned-sealed-product" data-confirm="Remove {{ product.name }} from your sealed products?">Remove</button>
+                        <div class="flex gap-2">
+                            <button type="button" class="btn btn-muted" data-modal-close>Cancel</button>
+                            <button type="submit" class="btn">Save</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}

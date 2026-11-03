@@ -9,4 +9,6 @@ interface SealedProductRepository
     public function upsert(SealedProduct $sealedProduct): void;
 
     public function find(int $productId): ?SealedProduct;
+
+    public function search(string $query, int $limit): SealedProducts;
 }
