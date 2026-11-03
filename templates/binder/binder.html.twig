@@ -87,7 +87,7 @@
                     <div class="flex flex-col gap-1">
                         <span class="kpi-l">Pockets per page</span>
                         <div class="seg">
-                            {% for pockets in binder.pocketsPerPage in [4, 9, 12] ? [4, 9, 12] : [4, 9, 12, binder.pocketsPerPage]|sort %}
+                            {% for pockets in binder.pocketsPerPage in [4, 9, 12, 16] ? [4, 9, 12, 16] : [4, 9, 12, 16, binder.pocketsPerPage]|sort %}
                                 <label><input type="radio" name="pocketsPerPage" value="{{ pockets }}" required {{ pockets == binder.pocketsPerPage ? 'checked' }} class="sr-only">{{ pockets }}</label>
                             {% endfor %}
                         </div>

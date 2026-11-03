@@ -113,7 +113,7 @@
                         <div class="flex flex-col gap-1">
                             <span class="kpi-l">Pockets per page</span>
                             <div class="seg">
-                                {% for pockets in [4, 9, 12] %}
+                                {% for pockets in [4, 9, 12, 16] %}
                                     <label><input type="radio" name="pocketsPerPage" value="{{ pockets }}" required {{ pockets == 9 ? 'checked' }} class="sr-only">{{ pockets }}</label>
                                 {% endfor %}
                             </div>
