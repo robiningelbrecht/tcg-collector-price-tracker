@@ -23,7 +23,7 @@
                 <a href="{{ path('dashboard') }}" class="flex shrink-0 items-center gap-3">
                     <img src="https://static.tcgcollector.com/build/images/tcgcollector-logo-with-text-light.15508095.svg" alt="TCG Collector" referrerpolicy="no-referrer" class="h-6 w-auto sm:h-7">
                     <span class="hidden h-5 w-px bg-dark-600 sm:block"></span>
-                    <span class="hidden text-[13px] font-semibold text-dark-300 sm:block">Price tracker</span>
+                    <span class="hidden text-[13px] font-semibold text-dark-300 sm:block">Price tracker <span class="text-[11px] font-medium text-dark-400">({{ app_version }})</span></span>
                 </a>
                 <nav class="ml-auto hidden items-center gap-1 md:flex">
                     {% for name, label in pages %}
