@@ -44,5 +44,8 @@ RUN rm -Rf docker \
     && composer dump-env prod \
     && bin/console cache:warmup
 
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
+
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile" ]
