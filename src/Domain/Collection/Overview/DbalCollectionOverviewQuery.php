@@ -11,6 +11,8 @@ use App\Infrastructure\Repository\DbalRepository;
 
 final readonly class DbalCollectionOverviewQuery extends DbalRepository implements CollectionOverviewQuery
 {
+    private const string PLAUSIBLE_TREND = '(CardPrice.avg30 IS NULL OR CardPrice.trend >= CardPrice.avg30 * 0.1)';
+
     public function find(): OverviewCards
     {
         $pricesPerVariant = $this->findPricesPerVariant();
@@ -86,7 +88,7 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
     private function findPricedCards(): array
     {
         $rows = $this->connection->executeQuery(
-            'SELECT DISTINCT language, cardId FROM CardPrice WHERE source = :source AND trend IS NOT NULL',
+            'SELECT DISTINCT language, cardId FROM CardPrice WHERE source = :source AND trend IS NOT NULL AND '.self::PLAUSIBLE_TREND,
             ['source' => PriceSource::CARDMARKET->value]
         )->fetchAllAssociative();
 
@@ -108,6 +110,7 @@ final readonly class DbalCollectionOverviewQuery extends DbalRepository implemen
             FROM CardPrice
             WHERE CardPrice.source = :source
             AND CardPrice.trend IS NOT NULL
+            AND '.self::PLAUSIBLE_TREND.'
             AND EXISTS (
                 SELECT 1 FROM OwnedCard
                 WHERE OwnedCard.language = CardPrice.language
